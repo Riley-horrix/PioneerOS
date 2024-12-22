@@ -1,52 +1,75 @@
-PI_VERSION ?= 1
+# Raspberry PI Version To Build For
+RPI_VERSION ?= 1
 
-CC=arm-none-eabi
+# Current Version of the Operating System
+PIOS_VERSION := 0.0.1
 
-CPU=arm1176jzf-s
+# Define absolute paths to directories
+ROOT_DIR	:= $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+BUILD_DIR 	:= $(ROOT_DIR)/build
 
-SRC_DIR = src
-SRC_FILES = $(wildcard $(SRC_DIR)/*.c) \
-			$(wildcard $(SRC_DIR)/*.S) \
-			$(wildcard $(SRC_DIR)/*/*.c) \
-			$(wildcard $(SRC_DIR)/*/*.S)
+# Cross compiler for code
+CC_BASE ?= arm-none-eabi
+CC 		= $(CC_BASE)-gcc
+CC_ASM	= $(CC_BASE)-as
+LD		= $(CC_BASE)-ld
+OCPY	= $(CC_BASE)-objcopy
 
-SRC_BUILD = $(patsubst %.S, %_S.o, $(patsubst %.c, %_c.o, $(SRC_FILES)))
+# Command line options for compiler
+# -mcpu=arm1176jzf-s -mfpu=vfpv2 -march=armv6 
+CC_OPT		= -mcpu=arm1176jzf-s -mfpu=vfpv2 -fpic -std=c17 -Wall -Wextra -nostdlib -nostartfiles -fasm -ffreestanding -c -I $(ROOT_DIR)/include
+CC_ASM_OPT	= -mcpu=arm1176jzf-s -mfpu=vfpv2 
+LD_OPT		= -nostdlib
 
-OBJ_SRC = $(foreach src, $(SRC_BUILD), $(subst $(SRC_DIR)/, $(BUILD_DIR)/, $(src)))
+RELEASE = -O2
 
-DEP_SRC = $(OBJ_SRC:%.o=%.d)
--include $(DEP_SRC)
+# Command line options for QEMU
+# -M = model
+# -serial mon:stdio = redirect serial output to terminal
+# -kernel
+QEMU_OPT = -nographic -m 512 -M raspi1ap -serial mon:stdio
 
-BUILD_DIR = build
-TEST_DIR = test
+KERNEL			= $(BUILD_DIR)/kernel.elf
+KERNEL_DEBUG	= $(BUILD_DIR)/kerneld.elf
 
-INCLUDE = -Iinclude
+export
 
-CC_OPTS = -DPI_VERSION=$(PI_VERSION) -Wall -Werror -nostdlib -nostartfiles \
-	-ffreestanding $(INCLUDE) -mgeneral-regs-only -mcpu=$(CPU)
+all: $(BUILD_DIR) kernel
 
-ASM_OPTS = $(INCLUDE)
+$(BUILD_DIR): $(BUILD_DIR)/boot $(BUILD_DIR)/common $(BUILD_DIR)/kernel
+	mkdir -p $(BUILD_DIR)
 
-TARGET = kernel-pioneer.img
+$(BUILD_DIR)/%:
+	mkdir -p $@
 
-all: $(TARGET)
+kernel: $(BUILD_DIR)
+	@echo
+	@echo Building PioneerOS
+	@echo
+	@echo Raspberry PI target   : $(RPI_VERSION)
+	@echo PioneerOS Version     : $(PIOS_VERSION)
+	@echo
+	$(MAKE) -C ./src $(KERNEL)
+
+kernel-debug: $(BUILD_DIR)
+	$(MAKE) -C ./src $(KERNEL_DEBUG)
+
+qemu: kernel
+	qemu-system-arm $(QEMU_OPT) -kernel $(KERNEL) 
+
+qemu-debug: kernel-debug
+	qemu-system-arm $(QEMU_OPT) -S -s -d in_asm,cpu -D $(BUILD_DIR)/qemu.log -kernel $(KERNEL_DEBUG) 
+
+lldb:
+	lldb --arch armv6m --one-line "gdb-remote 1234" $(KERNEL_DEBUG)
+
+format-check:
+	$(MAKE) -C ./src format-check
+
+format:
+	$(MAKE) -C ./src format
 
 clean:
-	@rm -rf $(BUILD_DIR) *.img
+	@rm -rf $(BUILD_DIR)
 
-$(BUILD_DIR)/%_c.o: $(SRC_DIR)/%.c
-	mkdir -p $(@D)
-	$(CC)-gcc $(CC_OPTS) -c $< -o $@
-
-$(BUILD_DIR)/%_S.o: $(SRC_DIR)/%.S
-	mkdir -p $(@D)
-	$(CC)-gcc $(ASM_OPTS) -c $< -o $@
-
-$(TARGET): $(SRC_DIR)/linker.ld $(OBJ_SRC) config.txt
-	@echo ""
-	@echo "Building kernel for the RaspberryPI $(PI_VERSION)"
-	@echo ""
-	$(CC)-ld -T $(SRC_DIR)/linker.ld -o $(BUILD_DIR)/kernel.elf $(OBJ_SRC)
-	$(CC)-objcopy $(BUILD_DIR)/kernel.elf -O binary $(TARGET)
-
-.PHONY: clean all
+.PHONY: all kernel kernel-debug qemu qemu-debug lldb format format-check clean 

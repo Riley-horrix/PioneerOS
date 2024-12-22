@@ -1,8 +1,5 @@
 # Build files
 build
-doc
-*.img
-*.o
 
 # IDE Files
 .vscode
