@@ -58,7 +58,7 @@ qemu: kernel
 	qemu-system-arm $(QEMU_OPT) -kernel $(KERNEL) 
 
 qemu-debug: kernel-debug
-	qemu-system-arm $(QEMU_OPT) -S -s -d in_asm,cpu -D $(BUILD_DIR)/qemu.log -kernel $(KERNEL_DEBUG) 
+	qemu-system-arm $(QEMU_OPT) -S -s -kernel $(KERNEL_DEBUG) 
 
 lldb:
 	lldb --arch armv6m --one-line "gdb-remote 1234" $(KERNEL_DEBUG)
