@@ -10,9 +10,8 @@
 #ifndef COMMON_COMMON_H
 #define COMMON_COMMON_H
 
-
 #include "common/types.h"
 
-inline void spin_delay(u32_t count);
+void spin_delay(u32_t count);
 
 #endif // common.h

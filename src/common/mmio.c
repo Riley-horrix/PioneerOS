@@ -19,7 +19,7 @@
  * @param reg Address of the register.
  * @param value Value to write.
  */
-inline void write_mmio(reg32_t *reg, u32_t value) { *reg = value; }
+inline void write_mmio(reg32_t* reg, u32_t value) { *reg = value; }
 
 /**
  * @brief Read a register from a peripheral MMIO register.
@@ -31,7 +31,7 @@ inline void write_mmio(reg32_t *reg, u32_t value) { *reg = value; }
  * @param reg Address of the register.
  * @return u32_t Value at that address.
  */
-inline u32_t read_mmio(reg32_t *reg) { return *reg; }
+inline u32_t read_mmio(reg32_t* reg) { return *reg; }
 
 /**
  * @brief Write a value to a peripheral MMIO register.
@@ -45,9 +45,7 @@ inline u32_t read_mmio(reg32_t *reg) { return *reg; }
  * @param reg Address of the register.
  * @param value Value to write.
  */
-inline void write_mmion(u32_t reg, u32_t value) {
-    write_mmio((reg32_t *)reg, value);
-}
+inline void write_mmion(u32_t reg, u32_t value) { write_mmio((reg32_t*)reg, value); }
 
 /**
  * @brief Read a register from a peripheral MMIO register.
@@ -61,4 +59,4 @@ inline void write_mmion(u32_t reg, u32_t value) {
  * @param reg Address of the register.
  * @return u32_t Value at that address.
  */
-inline u32_t read_mmion(u32_t reg) { return read_mmio((reg32_t *)reg); }
+inline u32_t read_mmion(u32_t reg) { return read_mmio((reg32_t*)reg); }

@@ -18,8 +18,8 @@
 //! @brief Prevents write reordering over different peripheral devices.
 #define __write_barrier() asm volatile("" ::: "memory")
 
-void write_mmio(reg32_t *reg, u32_t value);
-u32_t read_mmio(reg32_t *reg);
+void write_mmio(reg32_t* reg, u32_t value);
+u32_t read_mmio(reg32_t* reg);
 
 void write_mmion(u32_t reg, u32_t value);
 u32_t read_mmion(u32_t reg);

@@ -16,9 +16,8 @@
  * @param count Number of cycles to spin.
  */
 inline void spin_delay(u32_t count) {
-    asm volatile(
-        "__spin_delay_%=: subs %[count], %[count], #1; bne __spin_delay_%=\n"
-        : "=r"(count)
-        : [count] "0"(count)
-        : "cc");
+    asm volatile("__spin_delay_%=: subs %[count], %[count], #1; bne __spin_delay_%=\n"
+                 : "=r"(count)
+                 : [count] "0"(count)
+                 : "cc");
 }

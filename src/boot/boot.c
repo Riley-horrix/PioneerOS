@@ -25,6 +25,8 @@ void boot_main(uint32_t r0, uint32_t r1, uint32_t atags) {
     uart_init();
     uart_puts("Hello, World!\r\n");
 
+    uart_puts("\e[0m");
+
     while (1) {
         unsigned char in = uart_getch();
         if (in == (unsigned char)'\r') {

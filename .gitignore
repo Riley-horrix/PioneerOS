@@ -3,3 +3,6 @@ build
 
 # IDE Files
 .vscode
+
+# Documentation Files
+doc/*.pdf

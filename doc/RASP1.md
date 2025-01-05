@@ -14,6 +14,8 @@ This is a breif document collating the various sources of information on the Ras
 
 [https://jsandler18.github.io](https://jsandler18.github.io/tutorial/boot.html)
 
+[https://github.com/raspberrypi/linux/issues/16](https://github.com/raspberrypi/linux/issues/16)
+
 Processor = ARM1176JZF-S
 
 Chip = BCM2835

@@ -27,10 +27,11 @@ RELEASE = -O2
 # -M = model
 # -serial mon:stdio = redirect serial output to terminal
 # -kernel
-QEMU_OPT = -nographic -m 512 -M raspi1ap -serial mon:stdio
+QEMU_OPT = -m 512 -M raspi1ap -serial mon:stdio
 
 KERNEL			= $(BUILD_DIR)/kernel.elf
 KERNEL_DEBUG	= $(BUILD_DIR)/kerneld.elf
+KERNEL_IMG 		= $(BUILD_DIR)/kernel7.img
 
 export
 
@@ -55,7 +56,10 @@ kernel-debug: $(BUILD_DIR)
 	$(MAKE) -C ./src $(KERNEL_DEBUG)
 
 qemu: kernel
-	qemu-system-arm $(QEMU_OPT) -kernel $(KERNEL) 
+	qemu-system-arm -nographic $(QEMU_OPT) -kernel $(KERNEL)
+
+qemu-console: kernel
+	qemu-system-arm $(QEMU_OPT) -kernel $(KERNEL)
 
 qemu-debug: kernel-debug
 	qemu-system-arm $(QEMU_OPT) -S -s -kernel $(KERNEL_DEBUG) 
