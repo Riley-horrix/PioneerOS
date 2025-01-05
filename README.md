@@ -1,17 +1,80 @@
-# Running
+# PioneerOS
 
-`make qemu-debug`
+**PioneerOS** is a personal project of mine to learn as much about low level operating system functionality as I can, by designing one of my own. It was inspired by a course on Operating Systems and subsequent coursework that I took in second year of University.
 
-Then in a separate terminal run 
+The aim of this project is to build a hybrid operating system from scratch for the Raspberry PI hardware, initially the target hardware will be the Raspberry PI 1b (more details in [doc/RASP1.md](doc/RASP1.md)). **PioneerOS** will implement modern operating system design and algorithms and will hopefully become a fully featured interactive operating system with user processes, memory management, interactive shell and security functionality.
 
-`make lldb`
+## Quick Links
 
-Inside lldb you will need to run 
+[Requirements](#requirements)
 
-```
-(lldb) gdb-remote 1234
-```
+[Compiling](#compiling)
 
-To exit from qemu type :
+[Running](#running)
 
-`crtl + a` then `x`
+[Debugging](#debugging)
+
+[Documentation](#documentation)
+
+## Other Documentation
+
+[Design](doc/DESIGN.md)
+
+[Link to Licence](doc/LICENCE)
+
+[Link to Contributing Guidelines](doc/CONTRIBUTING.md)
+
+## Overview
+
+This project uses Make for compilation and running, subsequently there are an array of make targets for different options.
+
+### Requirements
+
+- GNU Make (***3.81***)
+- Modern Cross Compiler to target ARMv6 Hardware (***Arm GNU Toolchain 13.2***)
+
+To run the kernel on your machine, you will need a virtualising software.
+
+- QEMU emulator version (***9.2.0***)
+
+For debugging, I am using the LLDB debugger, from the LLVM project. For debugging in QEMU, you need a debugger capable of connecting to the emulator using the gdb remote interface, LLDB is capable of this facility.
+
+- Modern debugger (***lldb-1600.0.39.109***)
+
+### Compiling
+
+Compiling the operating system involves first compiling the kernel image, and then setting up a root filesystem for the operating system to run inside of.
+
+To build the kernel, run `make kernel`. This will compile all of the build targets that the kernel image requires, link them correctly, and then output the kernel as a ***.img*** file in the build directory.
+
+----- WIP -----
+
+Compiling the user space binaries needed for the operating system in the root filesystem requires running the command `make binaries`. This compiles the core binaries, like the **printf**, **cd**, **cat**, etc.
+
+Finally, the root filesystem will need to be created for the operating system to run inside of. This filesystem will be located in build/rootfs. To build the system directory, run `make filesystem`. This command will first create all of the necessary directories inside of and including build/rootfs, then it will move all of the binaries into the correct directories, ready for running QEMU.
+
+----- WIP -----
+
+To build all targets of the kernel, production and debug, run the `make` command in the project directory.
+
+### Running
+
+Once the operating system has been compiled, and placed in the root filesystem, qemu can be started by running the command, `make qemu`. This will execute qemu using the rootfs. Currently, the only communication that the kernel uses is UART, which is redirected to the terminal stdio.
+
+### Debugging
+
+To debug the kernel, first the kernel needs to be made in debug mode, using `make kernel-debug` and `make binaries-debug`, then the usual `make filesystem` can be run to compile.
+
+Running the debugger is a little more involved. First you will have to start up the emulator in debug mode, that will stop the execution of the kernel at the start, and open a connection for a debugger to connect. 
+
+Run `make qemu-debug` to start qemu in debug mode. In a different terminal, you will then need to run `make lldb`.
+
+Inside LLDB, you can set breakpoints, run and inspect the program. Assuming that you have downloaded the relevant documentation, you can inspect a 'cheatsheet' on lldb inside the `doc` folder. 
+
+To exit from qemu type : `crtl + a` then `x`
+
+## Documentation
+
+***PioneerOS*** uses Doxygen to generate codebase documentation. Building this involves running `make doc`. This will generate a directory, `doc/doxygen/html`, in which is an html page containing documentation that can be opened with any web browser. Running `open doc/doxygen/html/index.html` will open the website using the default browser.
+
+Documentation on the Raspberry PI hardware, debugging cheat sheets, and all relevant documentation can be viewed using the command `make download-doc`. This will output a list of links to online distributions of pdfs that can be downloaded into the documentation folder.

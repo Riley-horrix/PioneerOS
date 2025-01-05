@@ -6,3 +6,4 @@ build
 
 # Documentation Files
 doc/*.pdf
+doc/doxygen

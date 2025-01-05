@@ -16,7 +16,7 @@
  * Peripheral bus addresses start at 0x7E000000
  * Mapped physical addresses start at 0x20000000
  */
-enum {
+enum UartPhysicalAddress {
     UART0_BASE   = 0x20201000,          // Base address
     UART0_DR     = (UART0_BASE + 0x00), // Data register
     UART0_RSRECR = (UART0_BASE + 0x04), // Receive status register / error clear register

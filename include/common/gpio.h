@@ -13,7 +13,7 @@
 /**
  * @brief Addresses for GPIO memory mapped peripheral IO.
  */
-enum {
+enum GpioPhysicalAddress {
     GPIO_BASE    = 0x20200000,         // GPIO Base address
     GPIO_GPFSEL0 = (GPIO_BASE + 0x00), // Function select registers
     GPIO_GPFSEL1 = (GPIO_BASE + 0x04),

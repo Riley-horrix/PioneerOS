@@ -1,0 +1,14 @@
+/*! \mainpage PioneerOS mainpage
+ *
+ * \section intro_sec Introduction
+ *
+ * PioneerOS is a personal project of mine to learn as much about low level operating system functionality as I can, by designing one of my own. It was inspired by a course on Operating Systems and subsequent coursework that I took in second year of University.
+ *
+ * The aim of this project is to build a hybrid operating system from scratch for the Raspberry PI hardware, initially the target hardware will be the Raspberry PI 1b (more details in [doc/RASP1.md](doc/RASP1.md)). **PioneerOS** will implement modern operating system design and algorithms and will hopefully become a fully featured interactive operating system with user processes, memory management, interactive shell and security functionality.
+ *
+ * \section install_sec Installation
+ *
+ * \subsection step1 Step 1: Opening the box
+ *
+ * etc...
+ */

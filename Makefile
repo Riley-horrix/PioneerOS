@@ -14,12 +14,15 @@ CC 		= $(CC_BASE)-gcc
 CC_ASM	= $(CC_BASE)-as
 LD		= $(CC_BASE)-ld
 OCPY	= $(CC_BASE)-objcopy
+ODMP 	= $(CC_BASE)-objdump
 
 # Command line options for compiler
 # -mcpu=arm1176jzf-s -mfpu=vfpv2 -march=armv6 
 CC_OPT		= -mcpu=arm1176jzf-s -mfpu=vfpv2 -fpic -std=c17 -Wall -Wextra -nostdlib -nostartfiles -fasm -ffreestanding -c -I $(ROOT_DIR)/include
 CC_ASM_OPT	= -mcpu=arm1176jzf-s -mfpu=vfpv2 
 LD_OPT		= -nostdlib
+
+ODMP_OPT	= -m arm -SwCrR
 
 RELEASE = -O2
 
@@ -32,6 +35,7 @@ QEMU_OPT = -m 512 -M raspi1ap -serial mon:stdio
 KERNEL			= $(BUILD_DIR)/kernel.elf
 KERNEL_DEBUG	= $(BUILD_DIR)/kerneld.elf
 KERNEL_IMG 		= $(BUILD_DIR)/kernel7.img
+KERNEL_ASM		= $(BUILD_DIR)/kernel.asm
 
 export
 
@@ -47,8 +51,8 @@ kernel: $(BUILD_DIR)
 	@echo
 	@echo Building PioneerOS
 	@echo
-	@echo Raspberry PI target   : $(RPI_VERSION)
-	@echo PioneerOS Version     : $(PIOS_VERSION)
+	@echo Raspberry PI target : $(RPI_VERSION)
+	@echo PioneerOS Version : $(PIOS_VERSION)
 	@echo
 	$(MAKE) -C ./src $(KERNEL)
 
@@ -72,6 +76,12 @@ format-check:
 
 format:
 	$(MAKE) -C ./src format
+
+doc:
+	doxygen
+
+download-doc:
+	@echo "--TODO--"
 
 clean:
 	@rm -rf $(BUILD_DIR)
