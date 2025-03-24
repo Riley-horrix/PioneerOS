@@ -30,11 +30,13 @@ RELEASE = -O2
 # -M = model
 # -serial mon:stdio = redirect serial output to terminal
 # -kernel
-QEMU_OPT = -m 512 -M raspi1ap -serial mon:stdio
+DTB ?= qemu/bcm2708-rpi-b-plus.dtb
+SD ?= qemu/raspios.img
+QEMU_OPT = -m 512 -M raspi1ap -serial mon:stdio -dtb $(DTB) -sd $(SD)
 
 KERNEL			= $(BUILD_DIR)/kernel.elf
 KERNEL_DEBUG	= $(BUILD_DIR)/kerneld.elf
-KERNEL_IMG 		= $(BUILD_DIR)/kernel7.img
+KERNEL_IMG 		= $(BUILD_DIR)/kernel.img
 KERNEL_ASM		= $(BUILD_DIR)/kernel.asm
 
 export
@@ -60,16 +62,16 @@ kernel-debug: $(BUILD_DIR)
 	$(MAKE) -C ./src $(KERNEL_DEBUG)
 
 qemu: kernel
-	qemu-system-arm -nographic $(QEMU_OPT) -kernel $(KERNEL)
+	qemu-system-arm -nographic $(QEMU_OPT) -kernel $(KERNEL_IMG)
 
 qemu-console: kernel
 	qemu-system-arm $(QEMU_OPT) -kernel $(KERNEL)
 
 qemu-debug: kernel-debug
-	qemu-system-arm $(QEMU_OPT) -S -s -kernel $(KERNEL_DEBUG) 
+	qemu-system-arm -nographic $(QEMU_OPT) -S -s -kernel $(KERNEL_IMG) 
 
 lldb:
-	lldb --arch armv6m --one-line "gdb-remote 1234" $(KERNEL_DEBUG)
+	lldb --arch armv6m --one-line "gdb-remote 1234" 
 
 format-check:
 	$(MAKE) -C ./src format-check

@@ -41,6 +41,19 @@ For debugging, I am using the LLDB debugger, from the LLVM project. For debuggin
 
 - Modern debugger (***lldb-1600.0.39.109***)
 
+You will also need some Raspberry Pi proprietary software to begin, like the device tree blobs and bootcode, downloaded from [their website](https://www.raspberrypi.com/software/operating-systems/). This then has to be unpacked a little and can be done in the following steps.
+
+- Download Raspberry Pi OS image.
+- Move image to `qemu/raspios.img`.
+- Doing `fdisk (-l) qemu/raspios.img` or `file qemu/raspios.img`, should show 2 partitions, one boot FAT32 partition and another EXT partition. We only care about the FAT32 partition since the EXT bit is only used for the existing Linux OS (we are making our own).
+- Now we can create a mounting directory with `sudo mkdir /mnt/raspi` or `~/raspi` on MacOSX.
+- Next we need to calculate the offset to the boot partition, which is calculated with `start sector * sector size`, which is often `8192 * 512 = 4194304`.
+- Now to mount the boot partition, use `sudo mount -o loop,offset=4194304 ./qemu/raspi.img /mnt/raspi/`, on MACOSX this is a little bit more involved, with `hdiutil attach -imagekey diskimage-class=CRawDiskImage -nomount qemu/raspios.img`, you can mount the image to a device disk. This will print out where it has mounted, select the disk where the Windows_FAT_32 partition is, and then `sudo mount -t msdos /dev/<disk> ~/raspi`.
+- Now you should be able to list the files of the mounted boot partition, you should see a bunch of `.dtb` files, boot code, and kernel images.
+- You need to pull out the relevant `.dtb` file for the Raspberry Pi you are emulating, `cp ~/raspi/bcm2708-rpi-b-plus.dtb qemu/`.
+- To unmount the disk, run `sudo unmount /mnt/raspi` or `hdiutil detach /dev/<disk>` (on MacOSX you will need to unmount the root directory).
+- The last step is to make the image size a multiple of 2, to do this, run `qemu-img resize ./qemu/raspios.img 8G`
+
 ### Compiling
 
 Compiling the operating system involves first compiling the kernel image, and then setting up a root filesystem for the operating system to run inside of.

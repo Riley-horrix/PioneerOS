@@ -104,3 +104,53 @@ void uart_puts(const char* str) {
         uart_putch(*str++);
     }
 }
+
+#define abs(x) (x > 0 ? x : -x)
+
+void uart_puti(i32_t number) {
+
+    if (number == 0) {
+        uart_putch('0');
+        return;
+    }
+
+    char buffer[12];
+    char* head = buffer + 11;
+    i32_t save = number;
+    *head-- = '\0';
+    while (number != 0) {
+        *head-- = '0' + abs(number % 10);
+        number /= 10;
+    }
+
+    if (save < 0) {
+        *head = '-';
+    } else {
+        head++;
+    }
+
+    uart_puts(head);
+}
+
+#define format_hex(x) ((x < 10) ? ('0' + x) : ('A' + (x - 10)))
+
+void uart_puth(u32_t number) {
+    if (number == 0) {
+        uart_putch('0');
+        return;
+    }
+
+    char buffer[64];
+    char* head = buffer + 60;
+
+    *head-- = '\0';
+    while (number != 0) {
+        *head-- = format_hex(number % 16);
+        number /= 16;
+    }
+
+    *head-- = 'x';
+    *head = '0';
+
+    uart_puts(head);
+}

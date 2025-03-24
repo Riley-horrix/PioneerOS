@@ -3,7 +3,7 @@ ENTRY(_start)
 SECTIONS
 {
     /* Starts at LOADER_ADDR. */
-    . = 0x8000;
+    . = 0x10000;
     __start = .;
     __text_start = .;
     .text :
@@ -39,4 +39,15 @@ SECTIONS
     . = ALIGN(4096); /* align to page size */
     __bss_end = .;
     __end = .;
+    .trailer ALIGN(4) :
+    {
+        LONG(0)
+        LONG(0)
+        LONG(0x00000001)    /* DTOK = 1, please give us device tree */
+        LONG(0x00000004)
+        LONG(0x4b4f5444)    /* DTOK */
+        LONG(0x00000020)
+        LONG(0x00000004)
+        LONG(0x4c545052)
+    }
 }

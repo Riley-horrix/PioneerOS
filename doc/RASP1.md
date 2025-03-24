@@ -16,6 +16,12 @@ This is a breif document collating the various sources of information on the Ras
 
 [https://github.com/raspberrypi/linux/issues/16](https://github.com/raspberrypi/linux/issues/16)
 
+https://raspberrypi.stackexchange.com/questions/10442/what-is-the-boot-sequence
+
+https://github.com/DieterReuter/workshop-raspberrypi-64bit-os/blob/master/part1-bootloader.md
+
+https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface#get-vc-memory
+
 Processor = ARM1176JZF-S
 
 Chip = BCM2835

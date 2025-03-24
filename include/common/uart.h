@@ -10,6 +10,8 @@
 #ifndef COMMON_UART_H
 #define COMMON_UART_H
 
+#include "common/types.h"
+
 /**
  * @brief Addresses for UART peripheral memory mapped IO.
  *
@@ -42,6 +44,8 @@ void uart_init();
 
 void uart_putch(unsigned char character);
 void uart_puts(const char* string);
+void uart_puti(i32_t number);
+void uart_puth(u32_t number);
 
 unsigned char uart_getch();
 
