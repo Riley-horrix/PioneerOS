@@ -4,9 +4,13 @@ BOOT_SRC += boot/start.S
 
 # ./common Source Files
 COMMON_SRC  = common/common.c
-COMMON_SRC += common/uart.c
 COMMON_SRC += common/mmio.c
 
-SRC_TARGETS = $(BOOT_SRC) $(COMMON_SRC)
+# ./driver Source Files
+DRIVER_SRC  = drivers/uart.c
+DRIVER_SRC += drivers/gpio.c
+DRIVER_SRC += drivers/mbox.c
+
+SRC_TARGETS = $(BOOT_SRC) $(COMMON_SRC) $(DRIVER_SRC)
 
 export

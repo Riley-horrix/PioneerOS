@@ -5,8 +5,10 @@ build
 .vscode
 
 # Documentation Files
-doc/*.pdf
 doc/doxygen
 
 # OS files
 .DS_Store
+
+# Misc files
+*.dts

@@ -43,7 +43,7 @@ export
 
 all: $(BUILD_DIR) kernel
 
-$(BUILD_DIR): $(BUILD_DIR)/boot $(BUILD_DIR)/common $(BUILD_DIR)/kernel
+$(BUILD_DIR): $(BUILD_DIR)/boot $(BUILD_DIR)/common $(BUILD_DIR)/kernel $(BUILD_DIR)/drivers
 	mkdir -p $(BUILD_DIR)
 
 $(BUILD_DIR)/%:

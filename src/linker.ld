@@ -2,7 +2,7 @@ ENTRY(_start)
  
 SECTIONS
 {
-    /* Starts at LOADER_ADDR. */
+    /* Starts at LOADER_ADDR. Use 0x10000 for QEMU and 0x8000 for real hardware. */
     . = 0x10000;
     __start = .;
     __text_start = .;

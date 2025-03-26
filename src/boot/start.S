@@ -5,6 +5,7 @@
 _start:
     @ Point the stack to 0x8000 since OS starts at 0x8000
     @ (and stack grows downwards)
+    @ Use 0x10000 for QEMU and 0x8000 for real hardware. 
     mov sp, #0x10000
 
     @ Set bss region to 0
