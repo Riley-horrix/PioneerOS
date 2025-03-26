@@ -12,7 +12,6 @@ static u32_t mailbox_read(u32_t channel) {
         // Make sure there is mail to recieve
         do {
             status = read_mmion(MBOX_0_STATUS);
-            uart_putch('a');
         } while (status & MBOX_EMPTY);
 
         // Get the message
