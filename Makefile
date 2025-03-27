@@ -18,13 +18,13 @@ ODMP 	= $(CC_BASE)-objdump
 
 # Command line options for compiler
 # -mcpu=arm1176jzf-s -mfpu=vfpv2 -march=armv6 
-CC_OPT		= -mcpu=arm1176jzf-s -mfpu=vfpv2 -fpic -std=c17 -Wall -Wextra -nostdlib -nostartfiles -fasm -ffreestanding -c -I $(ROOT_DIR)/include
+CC_OPT		= -mcpu=arm1176jzf-s -mfpu=vfpv2 -fpic -std=c17 -Wall -Wextra -Werror -nostdlib -nostartfiles -fasm -ffreestanding -c -I $(ROOT_DIR)/include
 CC_ASM_OPT	= -mcpu=arm1176jzf-s -mfpu=vfpv2 
 LD_OPT		= -nostdlib
 
 ODMP_OPT	= -m arm -SwCrR
 
-RELEASE = -O2
+RELEASE = -O1
 
 # Command line options for QEMU
 # -M = model
@@ -65,13 +65,13 @@ qemu: kernel
 	qemu-system-arm -nographic $(QEMU_OPT) -kernel $(KERNEL_IMG)
 
 qemu-console: kernel
-	qemu-system-arm $(QEMU_OPT) -kernel $(KERNEL)
+	qemu-system-arm $(QEMU_OPT) -kernel $(KERNEL_IMG)
 
 qemu-debug: kernel-debug
-	qemu-system-arm -nographic $(QEMU_OPT) -S -s -kernel $(KERNEL_IMG) 
+	qemu-system-arm -nographic $(QEMU_OPT) -S -s -kernel $(KERNEL_IMG)
 
 lldb:
-	lldb --arch armv6m --one-line "gdb-remote 1234" 
+	lldb --arch armv6m --one-line "gdb-remote 1234" $(KERNEL_DEBUG)
 
 format-check:
 	$(MAKE) -C ./src format-check

@@ -16,7 +16,7 @@
 /**
  * @brief Initialise the UART peripheral on GPIO pins 14 & 15.
  */
-void uart_init() {
+void uart_init(void) {
     __write_barrier();
     // Disable UART
     write_mmion(UART0_CR, 0x0);
@@ -105,7 +105,7 @@ void uart_puts(const char* str) {
     }
 }
 
-#define abs(x) (x > 0 ? x : -x)
+#define abs(x) (x >= 0 ? x : -x)
 
 void uart_puti(i32_t number) {
 
@@ -135,13 +135,16 @@ void uart_puti(i32_t number) {
 #define format_hex(x) ((x < 10) ? ('0' + x) : ('A' + (x - 10)))
 
 void uart_puth(u32_t number) {
+    uart_puts("hex number : ");
+    uart_puti(number);
+    uart_puts("\n");
     if (number == 0) {
-        uart_putch('0');
+        uart_puts("0x0");
         return;
     }
 
-    char buffer[64];
-    char* head = buffer + 60;
+    char buffer[11]; // 0, x, 8 hex digits and a null terminator.
+    char* head = buffer + 10;
 
     *head-- = '\0';
     while (number != 0) {

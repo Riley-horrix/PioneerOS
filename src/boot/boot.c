@@ -37,10 +37,15 @@ void boot_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 
     uart_putch('\n');
 
-    u32_t board_rev = mailbox_get_board_revision();
-    uart_puts("board rev : ");
-    uart_puth(board_rev);
-    uart_init('\n');
+    u32_t data[2];
+
+    int ret = mailbox_request_property(MBOX_GET_ARM_MEMORY, (u8_t*) data);
+
+    uart_puti(ret);
+    uart_puts(" : status, mem : ");
+    uart_puth(data[0]);
+    uart_putch('\n');
+    uart_puth(data[1]);
 
     while (1) {
         unsigned char in = uart_getch();
