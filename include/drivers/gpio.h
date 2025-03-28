@@ -59,6 +59,8 @@ enum GpioPhysicalAddress {
 
 enum pinMode_t { GPIO_INPUT, GPIO_OUTPUT };
 
+enum pinLevel_t { GPIO_HIGH, GPIO_LOW };
+
 /**
  * @brief Set the mode of a gpio pin.
  *
@@ -66,8 +68,6 @@ enum pinMode_t { GPIO_INPUT, GPIO_OUTPUT };
  * @param mode The pin mode.
  */
 void gpio_pin_mode(int pin, enum pinMode_t mode);
-
-enum pinLevel_t { GPIO_HIGH, GPIO_LOW };
 
 /**
  * @brief Set the output level of a gpio pin.

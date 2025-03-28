@@ -18,34 +18,19 @@
  * @param r1
  * @param atags
  */
-void boot_main(uint32_t r0, uint32_t r1, uint32_t atags) {
-    // (void)r0;
-    // (void)r1;
-    // (void)atags;
+void boot_main(u32_t r0, u32_t r1, u32_t atags) {
+    (void)r0;
+    (void)r1;
+    (void)atags;
 
     uart_init();
-    uart_puts("Hello, World!\r\n");
+    uart_puts("\nInitialising PinoeerOS!\r\n");
 
-    uart_puts("\e[0m");
+    struct MailboxBoardRevision rev;
 
-    uart_puts("r0 : ");
-    uart_puti((i32_t)r0);
-    uart_puts(" r1 : ");
-    uart_puti((i32_t)r1);
-    uart_puts(" tags : ");
-    uart_puti((i32_t)atags);
+    mailbox_request_property(MBOX_GET_BOARD_REVISION, (u8_t*)&rev);
 
-    uart_putch('\n');
-
-    u32_t data[2];
-
-    int ret = mailbox_request_property(MBOX_GET_ARM_MEMORY, (u8_t*) data);
-
-    uart_puti(ret);
-    uart_puts(" : status, mem : ");
-    uart_puth(data[0]);
-    uart_putch('\n');
-    uart_puth(data[1]);
+    uart_puth(rev.memory);
 
     while (1) {
         unsigned char in = uart_getch();

@@ -18,7 +18,7 @@ ODMP 	= $(CC_BASE)-objdump
 
 # Command line options for compiler
 # -mcpu=arm1176jzf-s -mfpu=vfpv2 -march=armv6 
-CC_OPT		= -mcpu=arm1176jzf-s -mfpu=vfpv2 -fpic -std=c17 -Wall -Wextra -Werror -nostdlib -nostartfiles -fasm -ffreestanding -c -I $(ROOT_DIR)/include
+CC_OPT		= -mcpu=arm1176jzf-s -mfpu=vfpv2 -fpic -std=c17 -Wall -Wextra -Werror -nostdlib -nostartfiles -fasm -ffreestanding -c -I $(ROOT_DIR)/include -DRPI_VERSION=$(RPI_VERSION)
 CC_ASM_OPT	= -mcpu=arm1176jzf-s -mfpu=vfpv2 
 LD_OPT		= -nostdlib
 
@@ -32,7 +32,7 @@ RELEASE = -O1
 # -kernel
 DTB ?= qemu/bcm2708-rpi-b-plus.dtb
 SD ?= qemu/raspios.img
-QEMU_OPT = -m 512 -M raspi1ap -serial mon:stdio -dtb $(DTB) -sd $(SD)
+QEMU_OPT = -m 512 -M raspi1ap -serial mon:stdio -dtb $(DTB) -drive file=$(SD),if=sd,format=raw
 
 KERNEL			= $(BUILD_DIR)/kernel.elf
 KERNEL_DEBUG	= $(BUILD_DIR)/kerneld.elf

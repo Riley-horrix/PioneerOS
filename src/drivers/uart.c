@@ -14,14 +14,41 @@
 #include "drivers/gpio.h"
 
 /**
+ * @brief Addresses for UART peripheral memory mapped IO.
+ *
+ * Peripheral bus addresses start at 0x7E000000
+ * Mapped physical addresses start at 0x20000000
+ */
+enum UartPhysicalAddress {
+    UART0_BASE   = 0x20201000,          // Base address
+    UART0_DR     = (UART0_BASE + 0x00), // Data register
+    UART0_RSRECR = (UART0_BASE + 0x04), // Receive status register / error clear register
+    UART0_FR     = (UART0_BASE + 0x18), // Flag register
+    UART0_ILPR   = (UART0_BASE + 0x20), // Integer baud rate divisor
+    UART0_IBRD   = (UART0_BASE + 0x24), // Integer baud rate divisor
+    UART0_FBRD   = (UART0_BASE + 0x28), // Fractional baud rate divisor
+    UART0_LCRH   = (UART0_BASE + 0x2C), // Line control register
+    UART0_CR     = (UART0_BASE + 0x30), // Control register
+    UART0_IFLS   = (UART0_BASE + 0x34), // Interrupt FIFO level select register
+    UART0_IMSC   = (UART0_BASE + 0x38), // Interrupt mask set clear register
+    UART0_RIS    = (UART0_BASE + 0x3C), // Raw interrupt status register
+    UART0_MIS    = (UART0_BASE + 0x40), // Masked interrupt status register
+    UART0_ICR    = (UART0_BASE + 0x44), // Interrupt clear register
+    UART0_DMACR  = (UART0_BASE + 0x48), // DMA control register
+    UART0_ITCR   = (UART0_BASE + 0x80), // Test control register
+    UART0_ITIP   = (UART0_BASE + 0x84), // Integration test input register
+    UART0_ITOP   = (UART0_BASE + 0x88), // Integration test output register
+    UART0_TDR    = (UART0_BASE + 0x8C), // Test data register
+};
+
+/**
  * @brief Initialise the UART peripheral on GPIO pins 14 & 15.
  */
 void uart_init(void) {
-    __write_barrier();
     // Disable UART
+    __write_barrier();
     write_mmion(UART0_CR, 0x0);
 
-    __write_barrier();
     // Disable pull-up / pull-down & wait 150 clock cycles for the control signal setup.
     write_mmion(GPIO_GPPUD, 0x0);
     spin_delay(150);
@@ -34,7 +61,6 @@ void uart_init(void) {
     write_mmion(GPIO_GPPUD, 0x0);
     write_mmion(GPIO_GPPUDCLK0, 0x0);
 
-    __write_barrier();
     // Clear pending interrupts.
     write_mmion(UART0_ICR, 0x7ff);
 
@@ -62,6 +88,7 @@ void uart_init(void) {
     write_mmion(UART0_CR, (1 << 8) | (1 << 9));
     // Enable UART
     write_mmion(UART0_CR, (1 << 0));
+    __read_barrier();
 }
 
 /**
@@ -87,6 +114,7 @@ void uart_putch(unsigned char c) {
  * @return unsigned char The character received.
  */
 unsigned char uart_getch() {
+    __read_barrier();
     // Wait for UART receive FIFO to not be empty.
     while (read_mmion(UART0_FR) & (1 << 4)) {
     }
@@ -107,6 +135,11 @@ void uart_puts(const char* str) {
 
 #define abs(x) (x >= 0 ? x : -x)
 
+/**
+ * @brief Write a signed integer string to the UART connection.
+ *
+ * @param str The null terminated string to send.
+ */
 void uart_puti(i32_t number) {
 
     if (number == 0) {
@@ -134,11 +167,14 @@ void uart_puti(i32_t number) {
 
 #define format_hex(x) ((x < 10) ? ('0' + x) : ('A' + (x - 10)))
 
+/**
+ * @brief Write a hex formatted unsigned integer to the UART connection.
+ *
+ * @param str The null terminated string to send.
+ */
 void uart_puth(u32_t number) {
-    uart_puts("hex number : ");
-    uart_puti(number);
-    uart_puts("\n");
-    if (number == 0) {
+    number &= 0xffffffff;
+    if (!number) {
         uart_puts("0x0");
         return;
     }
@@ -148,7 +184,7 @@ void uart_puth(u32_t number) {
 
     *head-- = '\0';
     while (number != 0) {
-        *head-- = format_hex(number % 16);
+        *head-- = format_hex((number % 16));
         number /= 16;
     }
 
