@@ -10,8 +10,13 @@
 #include "common/common.h"
 #include "common/types.h"
 
-static u32_t test  = 0x1234;
-static bool beTest = false;
+static u32_t test = 0x1234;
+
+/**
+ * @brief Boolean representing system endianess, configured after `common_init()`. If `beTest` then
+ * the system is big endian.
+ */
+bool beTest = false;
 
 /**
  * @brief Initialise common functions.

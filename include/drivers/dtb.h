@@ -13,7 +13,10 @@
  * Copyright (c) Riley Horrix 2025
  */
 
-#include "common/common.h"
+#ifndef DRIVERS_DTB_H
+#define DRIVERS_DTB_H
+
+#include "common/defines.h"
 #include "common/types.h"
 
 #define FDT_MAGIC   0xd00dfeed
@@ -131,3 +134,5 @@ struct fdt_t {
 };
 
 enum fdt_return_value_t fdt_parse_blob(void* addr, struct fdt_t* result);
+
+#endif

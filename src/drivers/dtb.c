@@ -100,7 +100,8 @@ enum fdt_return_value_t fdt_parse_blob(void* addr, struct fdt_t* result) {
         return FDT_WRONG_VERSION;
     }
 
-    // The reserved memory section is located after the header block, and aligned to an 8 byte boundary.
+    // The reserved memory section is located after the header block, and aligned to an 8 byte
+    // boundary.
     result->reserved_mem =
         (struct fdt_reserve_entry_t*)(((ptr_t)addr + sizeof(struct fdt_header_t) + 0x7) & ~0x7);
 

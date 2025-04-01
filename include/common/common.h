@@ -12,7 +12,7 @@
 
 #include "common/types.h"
 
-#define MEMORY_STRUCT __attribute__((packed))
+extern bool beTest;
 
 void common_init(void);
 

@@ -17,8 +17,7 @@ OCPY	= $(CC_BASE)-objcopy
 ODMP 	= $(CC_BASE)-objdump
 
 # Command line options for compiler
-# -mcpu=arm1176jzf-s -mfpu=vfpv2 -march=armv6 
-CC_OPT		= -mcpu=arm1176jzf-s -mfpu=vfpv2 -fpic -std=c17 -Wall -Wextra -Werror -nostdlib -nostartfiles -fasm -ffreestanding -c -I $(ROOT_DIR)/include -DRPI_VERSION=$(RPI_VERSION)
+CC_OPT		= -mcpu=arm1176jzf-s -mfpu=vfpv2 -mfloat-abi=hard -std=c17 -Wall -Wextra -Werror -nostdlib -nostartfiles -fasm -ffreestanding -c -I $(ROOT_DIR)/include -DRPI_VERSION=$(RPI_VERSION)
 CC_ASM_OPT	= -mcpu=arm1176jzf-s -mfpu=vfpv2 
 LD_OPT		= -nostdlib
 
