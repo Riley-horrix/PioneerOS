@@ -20,7 +20,7 @@
 
 /**
  * @brief Represents the possible mailbox property request codes.
- * 
+ *
  */
 enum MailboxRequestCodes {
     MBOX_GET_FIRMWARE_MODEL = 0x00000001,
@@ -35,7 +35,7 @@ enum MailboxRequestCodes {
 
 /**
  * @brief Return status codes from the mailbox interface.
- * 
+ *
  */
 enum MailboxReturnStatus {
     MBOX_RETURN_OK             = 0,
@@ -45,7 +45,7 @@ enum MailboxReturnStatus {
 
 /**
  * @brief Represents the supported mailbox channels.
- * 
+ *
  */
 enum MailboxChannels { MBOX_PROPERTY_CHANNEL = 0x8 };
 

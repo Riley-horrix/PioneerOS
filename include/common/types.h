@@ -30,4 +30,9 @@ typedef volatile u16_t reg16_t;
 typedef volatile u32_t reg32_t;
 typedef volatile u64_t reg64_t;
 
+// Boolean
+typedef int bool;
+#define true 1
+#define false 0
+
 #endif

@@ -10,6 +10,7 @@ COMMON_SRC += common/mmio.c
 DRIVER_SRC  = drivers/uart.c
 DRIVER_SRC += drivers/gpio.c
 DRIVER_SRC += drivers/mbox.c
+DRIVER_SRC += drivers/dtb.c
 
 SRC_TARGETS = $(BOOT_SRC) $(COMMON_SRC) $(DRIVER_SRC)
 

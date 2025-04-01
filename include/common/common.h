@@ -12,6 +12,16 @@
 
 #include "common/types.h"
 
+#define MEMORY_STRUCT __attribute__((packed))
+
+void common_init(void);
+
 void spin_delay(u32_t count);
+
+// Endianess functions
+
+u16_t beths(u16_t bg32);
+u32_t beth(u32_t bg32);
+u64_t bethl(u64_t bg32);
 
 #endif // common.h
