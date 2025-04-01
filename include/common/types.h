@@ -30,9 +30,16 @@ typedef volatile u16_t reg16_t;
 typedef volatile u32_t reg32_t;
 typedef volatile u64_t reg64_t;
 
+// Pointer type
+#if RPI_VERSION == 1 // 32 bit
+typedef u32_t arithptr_t;
+typedef u32_t ptr_t;
+#else
+#error "Pointer type not defined for raspberry pi version!"
+#endif
+
 // Boolean
 typedef int bool;
-#define true 1
+#define true  1
 #define false 0
-
 #endif

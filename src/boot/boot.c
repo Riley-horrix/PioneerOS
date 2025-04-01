@@ -7,11 +7,11 @@
  *
  * Copyright (c) Riley Horrix 2024
  */
-#include "common/types.h"
 #include "common/common.h"
+#include "common/types.h"
+#include "drivers/dtb.h"
 #include "drivers/mbox.h"
 #include "drivers/uart.h"
-#include "drivers/dtb.h"
 
 /**
  * @brief Do all of the low level driver initialisation and setup.
@@ -30,13 +30,12 @@ void boot_main(u32_t r0, u32_t r1, u32_t atags) {
     uart_puts("\nInitialising PinoeerOS!\r\n");
 
     struct fdt_t deviceTree;
-    int res = fdt_parse_blob((void*) atags, &deviceTree);
+    int res = fdt_parse_blob((void*)atags, &deviceTree);
 
-    if (res == FDT_NO_MAGIC) {
-        uart_puts("ERROR : NO FDT MAGIC!\n");
-        uart_puth(deviceTree.header.magic);
+    if (!res) {
+        uart_puts("Dtb parse failed with code : ");
+        uart_puti(res);
         uart_puts("\n");
-        uart_puth(FDT_MAGIC);
     }
 
     while (1) {

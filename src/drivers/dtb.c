@@ -9,8 +9,9 @@
  */
 
 #include "drivers/dtb.h"
-#include "common/types.h"
 #include "common/common.h"
+#include "common/types.h"
+#include "drivers/uart.h"
 
 /* ----- Tokens ----- */
 /* Each token is 32 bit aligned, which means padding the previous token with 0x0. */
@@ -75,27 +76,39 @@
 enum fdt_return_value_t fdt_parse_blob(void* addr, struct fdt_t* result) {
     // The header structure should be located at the start of the blob.
     struct fdt_header_t* fdtHeader = (struct fdt_header_t*)addr;
-    result->header = *fdtHeader;
+    result->header                 = *fdtHeader;
 
     // The values are stored as little endian so translate all of the values.
-    result->header.magic = beth(result->header.magic);
-    result->header.totalsize = beth(result->header.totalsize);
-    result->header.off_dt_struct = beth(result->header.off_dt_struct);
-    result->header.off_dt_strings = beth(result->header.off_dt_strings);
-    result->header.off_mem_rsvmap = beth(result->header.off_mem_rsvmap);
-    result->header.version = beth(result->header.version);
+    result->header.magic             = beth(result->header.magic);
+    result->header.totalsize         = beth(result->header.totalsize);
+    result->header.off_dt_struct     = beth(result->header.off_dt_struct);
+    result->header.off_dt_strings    = beth(result->header.off_dt_strings);
+    result->header.off_mem_rsvmap    = beth(result->header.off_mem_rsvmap);
+    result->header.version           = beth(result->header.version);
     result->header.last_comp_version = beth(result->header.last_comp_version);
-    result->header.boot_cpuid_phys = beth(result->header.boot_cpuid_phys);
-    result->header.size_dt_strings = beth(result->header.size_dt_strings);
-    result->header.size_dt_struct = beth(result->header.size_dt_struct);
+    result->header.boot_cpuid_phys   = beth(result->header.boot_cpuid_phys);
+    result->header.size_dt_strings   = beth(result->header.size_dt_strings);
+    result->header.size_dt_struct    = beth(result->header.size_dt_struct);
 
     // Ensure that the magic is valid
     if (result->header.magic != FDT_MAGIC) {
         return FDT_NO_MAGIC;
     }
 
-    // The reserved memory is located after the header block, and aligned to an 8 byte boundary.
-    result->reserved_mem = 0;
+    // Ensure DTB version is parsable.
+    if (result->header.version != FDT_VERSION) {
+        return FDT_WRONG_VERSION;
+    }
+
+    // The reserved memory section is located after the header block, and aligned to an 8 byte boundary.
+    result->reserved_mem =
+        (struct fdt_reserve_entry_t*)(((ptr_t)addr + sizeof(struct fdt_header_t) + 0x7) & ~0x7);
+
+    // Set the device tree structure pointer.
+    result->structure_block = (void*)((u8_t*)addr + result->header.off_dt_strings);
+
+    // Set the string dictionary pointer.
+    result->strings = (const char*)addr + result->header.off_dt_strings;
 
     return FDT_GOOD;
 }

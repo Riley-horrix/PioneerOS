@@ -16,12 +16,13 @@
 #include "common/common.h"
 #include "common/types.h"
 
-#define FDT_MAGIC 0xd00dfeed
-
+#define FDT_MAGIC   0xd00dfeed
+#define FDT_VERSION 17
 
 enum fdt_return_value_t {
-    FDT_GOOD = 0,
-    FDT_NO_MAGIC = 1,
+    FDT_GOOD          = 0,
+    FDT_NO_MAGIC      = -1,
+    FDT_WRONG_VERSION = -2,
 };
 
 /**
@@ -125,7 +126,8 @@ struct fdt_prop_t {
 struct fdt_t {
     struct fdt_header_t header;               // Info containing header.
     struct fdt_reserve_entry_t* reserved_mem; // A list of reserved memory entries.
-    char* strings;                          // The strings block.
+    void* structure_block;                    // Device tree structure.
+    const char* strings;                      // The strings block.
 };
 
 enum fdt_return_value_t fdt_parse_blob(void* addr, struct fdt_t* result);

@@ -138,7 +138,7 @@ void uart_puts(const char* str) {
 /**
  * @brief Write a signed integer string to the UART connection.
  *
- * @param str The null terminated string to send.
+ * @param number The integer to send.
  */
 void uart_puti(i32_t number) {
 
@@ -147,7 +147,7 @@ void uart_puti(i32_t number) {
         return;
     }
 
-    char buffer[12];
+    char buffer[12]; // 10 decimal digits, 1 '-' and 1 null terminator.
     char* head = buffer + 11;
     i32_t save = number;
     *head--    = '\0';
@@ -165,15 +165,97 @@ void uart_puti(i32_t number) {
     uart_puts(head);
 }
 
+/**
+ * @brief Write an unsigned integer string to the UART connection.
+ *
+ * @param number The unsigned number to send.
+ */
+void uart_putu(u32_t number) {
+
+    if (number == 0) {
+        uart_putch('0');
+        return;
+    }
+
+    char buffer[11]; // 10 decimal digits and 1 null terminator.
+    char* head = buffer + 10;
+
+    *head-- = '\0';
+    while (number != 0) {
+        *head-- = '0' + (number % 10);
+        number /= 10;
+    }
+
+    head++;
+
+    uart_puts(head);
+}
+
+/**
+ * @brief Write a long integer string to the UART connection.
+ *
+ * @param number The long signed number to send.
+ */
+void uart_putil(i64_t number) {
+
+    if (number == 0) {
+        uart_putch('0');
+        return;
+    }
+
+    char buffer[21]; // 19 decimal digits, 1 '-' and 1 null terminator.
+    char* head = buffer + 20;
+    i64_t save = number;
+
+    *head-- = '\0';
+    while (number != 0) {
+        *head-- = '0' + abs(number % 10);
+        number /= 10;
+    }
+
+    if (save < 0) {
+        *head = '-';
+    } else {
+        head++;
+    }
+
+    uart_puts(head);
+}
+
+/**
+ * @brief Write a long unsigned integer to the UART connection.
+ *
+ * @param number The long unsigned number to send.
+ */
+void uart_putul(u64_t number) {
+
+    if (number == 0) {
+        uart_putch('0');
+        return;
+    }
+
+    char buffer[20]; // 19 decimal digits and 1 null terminator.
+    char* head = buffer + 19;
+
+    *head-- = '\0';
+    while (number != 0) {
+        *head-- = '0' + (number % 10);
+        number /= 10;
+    }
+
+    head++;
+
+    uart_puts(head);
+}
+
 #define format_hex(x) ((x < 10) ? ('0' + x) : ('A' + (x - 10)))
 
 /**
  * @brief Write a hex formatted unsigned integer to the UART connection.
  *
- * @param str The null terminated string to send.
+ * @param number The unsigned integer to send.
  */
 void uart_puth(u32_t number) {
-    number &= 0xffffffff;
     if (!number) {
         uart_puts("0x0");
         return;
@@ -185,7 +267,28 @@ void uart_puth(u32_t number) {
     *head-- = '\0';
     while (number != 0) {
         *head-- = format_hex((number % 16));
-        number /= 16;
+        number >>= 4;
+    }
+
+    *head-- = 'x';
+    *head   = '0';
+
+    uart_puts(head);
+}
+
+void uart_puthl(u64_t number) {
+    if (!number) {
+        uart_puts("0x0");
+        return;
+    }
+
+    char buffer[19]; // 1 '0', 1 'x', 16 hex digits and a null terminator.
+    char* head = buffer + 18;
+
+    *head-- = '\0';
+    while (number != 0) {
+        *head-- = format_hex((number % 16));
+        number >>= 4;
     }
 
     *head-- = 'x';

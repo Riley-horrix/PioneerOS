@@ -16,8 +16,15 @@ void uart_init();
 
 void uart_putch(unsigned char character);
 void uart_puts(const char* string);
+
 void uart_puti(i32_t number);
+void uart_putu(u32_t number);
+
+void uart_putil(i64_t number);
+void uart_putul(u64_t number);
+
 void uart_puth(u32_t number);
+void uart_puthl(u64_t number);
 
 unsigned char uart_getch();
 
