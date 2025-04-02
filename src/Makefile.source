@@ -13,6 +13,9 @@ DRIVER_SRC += drivers/mbox.c
 DRIVER_SRC += drivers/dtb.c
 DRIVER_SRC += drivers/clock.c
 
-SRC_TARGETS = $(BOOT_SRC) $(COMMON_SRC) $(DRIVER_SRC)
+# ./kernel Source Files
+KERNEL_SRC  = kernel/mm.c
+
+SRC_TARGETS = $(BOOT_SRC) $(COMMON_SRC) $(DRIVER_SRC) $(KERNEL_SRC)
 
 export

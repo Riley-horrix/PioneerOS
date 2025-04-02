@@ -30,7 +30,8 @@ typedef volatile u16_t reg16_t;
 typedef volatile u32_t reg32_t;
 typedef volatile u64_t reg64_t;
 
-// Pointer type
+// Pointer types
+#define NULL 0x0
 #if RPI_VERSION == 1 // 32 bit
 typedef u32_t arithptr_t;
 typedef u32_t ptr_t;

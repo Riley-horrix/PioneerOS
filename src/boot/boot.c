@@ -32,7 +32,7 @@
  * @param r1
  * @param atags Address of the flattened device tree.
  */
-void boot_main(u32_t r0, u32_t r1, ptr_t atags) {
+void boot_main(u32_t r0, u32_t r1, ptr_t dtb) {
     (void)r0;
     (void)r1;
 
@@ -47,13 +47,18 @@ void boot_main(u32_t r0, u32_t r1, ptr_t atags) {
     }
 
     struct fdt_t deviceTree;
-    int res = fdt_parse_blob((void*)atags, &deviceTree);
+    int res = fdt_parse_blob((void*)dtb, &deviceTree);
 
     if (res != FDT_GOOD) {
         uart_puts("Dtb parse failed with code : ");
         uart_puti(res);
         uart_puts("\n");
     }
+
+    boot_info_uart("Printing device tree.");
+    uart_puth(dtb);
+    uart_puts("\n");
+    fdt_print(&deviceTree);
 
     while (1) {
         unsigned char in = uart_getch();

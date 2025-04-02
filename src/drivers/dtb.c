@@ -100,16 +100,100 @@ enum fdt_return_value_t fdt_parse_blob(void* addr, struct fdt_t* result) {
         return FDT_WRONG_VERSION;
     }
 
-    // The reserved memory section is located after the header block, and aligned to an 8 byte
-    // boundary.
+    // The reserved memory section is located after the header block.
     result->reserved_mem =
-        (struct fdt_reserve_entry_t*)(((ptr_t)addr + sizeof(struct fdt_header_t) + 0x7) & ~0x7);
+        (struct fdt_reserve_entry_t*)((u8_t*)addr + result->header.off_mem_rsvmap);
 
     // Set the device tree structure pointer.
-    result->structure_block = (void*)((u8_t*)addr + result->header.off_dt_strings);
+    result->structure_block = (void*)((u8_t*)addr + result->header.off_dt_struct);
 
     // Set the string dictionary pointer.
     result->strings = (const char*)addr + result->header.off_dt_strings;
 
     return FDT_GOOD;
+}
+
+#define print_tabs(n)\
+if (true) {\
+    unsigned int i = n;\
+    while (i-- > 0) { uart_putch('\t'); }\
+}
+
+/**
+ * @brief Print a node property.
+ *
+ * @param prop A pointer to the property data.
+ * @return int Number of bytes parsed.
+ */
+static int fdt_print_property(struct fdt_t* dtb, struct fdt_prop_t* prop, unsigned int level) {
+    print_tabs(level);
+
+    uart_puts(dtb->strings + beth(prop->nameoff));
+    uart_putch(':');
+    u32_t ind = 0;
+    while (ind < beth(prop->len)) {
+        uart_puti(beth(*(u32_t*)(prop->data + ind)));
+        ind += 4;
+    }
+    uart_putch('\n');
+
+    return (sizeof(struct fdt_prop_t) + prop->len + 3) & ~0x3;
+}
+
+static int fdt_print_node(struct fdt_t* dtb, const u32_t* nodePtr, int level) {
+    // Skip over FDT_NOP
+    const u32_t* nodeStart = nodePtr;
+
+    uart_puth((u32_t)nodeStart);
+    uart_puts("\n");
+    
+    while (beth(*nodePtr) == FDT_NOP) {
+        nodePtr++;
+    }
+    
+    // Check if valid node
+    if (beth(*nodePtr++) != FDT_BEGIN_NODE) {
+        return 0;
+    }
+    
+    // Print the node name
+    const char* namePtr = (const char*)nodePtr;
+
+    print_tabs(level);
+    uart_puts(namePtr);
+    uart_puts("{\n");
+
+    while (*namePtr++)
+        ;
+
+    // Buffer pointer to 4 byte boundary
+    nodePtr = (u32_t*)(((ptr_t)namePtr + 3) & ~0x3);
+
+    // Parse internal tokens
+    u32_t token;
+    while ((token = beth(*nodePtr++)) != FDT_END_NODE) {
+        switch (token) {
+        case FDT_NOP:
+            break;
+        case FDT_PROP:
+            nodePtr += fdt_print_property(dtb, (struct fdt_prop_t*)nodePtr, level + 1);
+            break;
+        case FDT_BEGIN_NODE:
+            nodePtr--;
+            nodePtr += fdt_print_node(dtb, nodePtr, level + 1);
+            break;
+        case FDT_END_NODE:
+            break;
+        }
+    }
+
+    print_tabs(level);
+    uart_puts("}\n");
+
+    return nodePtr - nodeStart;
+}
+
+void fdt_print(struct fdt_t* dtb) {
+    const u32_t* structurePtrStart = (const u32_t*)dtb->structure_block;
+    fdt_print_node(dtb, structurePtrStart, 0);
 }
