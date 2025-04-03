@@ -96,14 +96,14 @@ void uart_init(void) {
  *
  * @param c Character to write.
  */
-void uart_putch(unsigned char c) {
+void uart_putch(const char c) {
     // Wait for UART transmit FIFO full to be not full.
     while (read_mmion(UART0_FR) & (1 << 5)) {
     }
     __read_barrier();
     __write_barrier();
     // Write character to data register.
-    write_mmion(UART0_DR, c);
+    write_mmion(UART0_DR, (u32_t)c);
 }
 
 /**
@@ -196,57 +196,57 @@ void uart_putu(u32_t number) {
  *
  * @param number The long signed number to send.
  */
-void uart_putil(i64_t number) {
+// void uart_putil(i64_t number) {
 
-    if (number == 0) {
-        uart_putch('0');
-        return;
-    }
+//     if (number == 0) {
+//         uart_putch('0');
+//         return;
+//     }
 
-    char buffer[21]; // 19 decimal digits, 1 '-' and 1 null terminator.
-    char* head = buffer + 20;
-    i64_t save = number;
+//     char buffer[21]; // 19 decimal digits, 1 '-' and 1 null terminator.
+//     char* head = buffer + 20;
+//     i64_t save = number;
 
-    *head-- = '\0';
-    while (number != 0) {
-        *head-- = '0' + abs(number % 10);
-        number /= 10;
-    }
+//     *head-- = '\0';
+//     while (number != 0) {
+//         *head-- = '0' + abs(number % 10);
+//         number /= 10;
+//     }
 
-    if (save < 0) {
-        *head = '-';
-    } else {
-        head++;
-    }
+//     if (save < 0) {
+//         *head = '-';
+//     } else {
+//         head++;
+//     }
 
-    uart_puts(head);
-}
+//     uart_puts(head);
+// }
 
 /**
  * @brief Write a long unsigned integer to the UART connection.
  *
  * @param number The long unsigned number to send.
  */
-void uart_putul(u64_t number) {
+// void uart_putul(u64_t number) {
 
-    if (number == 0) {
-        uart_putch('0');
-        return;
-    }
+//     if (number == 0) {
+//         uart_putch('0');
+//         return;
+//     }
 
-    char buffer[20]; // 19 decimal digits and 1 null terminator.
-    char* head = buffer + 19;
+//     char buffer[20]; // 19 decimal digits and 1 null terminator.
+//     char* head = buffer + 19;
 
-    *head-- = '\0';
-    while (number != 0) {
-        *head-- = '0' + (number % 10);
-        number /= 10;
-    }
+//     *head-- = '\0';
+//     while (number != 0) {
+//         *head-- = '0' + (number % 10);
+//         number /= 10;
+//     }
 
-    head++;
+//     head++;
 
-    uart_puts(head);
-}
+//     uart_puts(head);
+// }
 
 #define format_hex(x) ((x < 10) ? ('0' + x) : ('A' + (x - 10)))
 
@@ -276,23 +276,23 @@ void uart_puth(u32_t number) {
     uart_puts(head);
 }
 
-void uart_puthl(u64_t number) {
-    if (!number) {
-        uart_puts("0x0");
-        return;
-    }
+// void uart_puthl(u64_t number) {
+//     if (!number) {
+//         uart_puts("0x0");
+//         return;
+//     }
 
-    char buffer[19]; // 1 '0', 1 'x', 16 hex digits and a null terminator.
-    char* head = buffer + 18;
+//     char buffer[19]; // 1 '0', 1 'x', 16 hex digits and a null terminator.
+//     char* head = buffer + 18;
 
-    *head-- = '\0';
-    while (number != 0) {
-        *head-- = format_hex((number % 16));
-        number >>= 4;
-    }
+//     *head-- = '\0';
+//     while (number != 0) {
+//         *head-- = format_hex((number % 16));
+//         number >>= 4;
+//     }
 
-    *head-- = 'x';
-    *head   = '0';
+//     *head-- = 'x';
+//     *head   = '0';
 
-    uart_puts(head);
-}
+//     uart_puts(head);
+// }

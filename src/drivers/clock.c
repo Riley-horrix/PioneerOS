@@ -18,5 +18,8 @@ enum ClockPhysicalAddress {
  * @return u64_t Microseconds since power on.
  */
 u64_t clock_micros(void) {
-    return (u64_t)read_mmion(CLOCK_SYS_TIMER_LOW) | ((u64_t)read_mmion(CLOCK_SYS_TIMER_HIGH) << 32);
+    u64_t time =
+        (u64_t)read_mmion(CLOCK_SYS_TIMER_LOW) | ((u64_t)read_mmion(CLOCK_SYS_TIMER_HIGH) << 32);
+    __read_barrier();
+    return time;
 }

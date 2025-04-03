@@ -8,7 +8,7 @@
  * Copyright (c) Riley Horrix 2025
  */
 
-#include "drivers/dtb.h"
+#include "drivers/dt.h"
 #include "common/common.h"
 #include "common/types.h"
 #include "drivers/uart.h"
@@ -68,15 +68,30 @@
  */
 #define FDT_END 0x00000009
 
+/// @brief Global instance of the system fdt.
+struct dt_t system_fdt;
+
 /**
- * @brief Parse a device tree located at `addr`, and write the results into `result`.
- *
- * Returns an enum fdt_return_value_t.
+ * @brief Initialise the global `dt_t` instance with a given fdt.
+ * 
+ * @param fdt The flattened device tree blob.
+ * @return enum dt_return_value_t The return value
  */
-enum fdt_return_value_t fdt_parse_blob(void* addr, struct fdt_t* result) {
+enum dt_return_value_t dt_init(void* fdt) {
+    return dt_parse_blob(fdt, &system_fdt);
+}
+
+/**
+ * @brief Parse a device tree located at `fdt`, and write the results into `result`.
+ * 
+ * This function only parsed the header of the fdt and does not validate any properties or nodes.
+ *
+ * Returns an enum dt_return_value_t.
+ */
+enum dt_return_value_t fdt_parse_blob(void* fdt, struct dt_t* result) {
     // The header structure should be located at the start of the blob.
-    struct fdt_header_t* fdtHeader = (struct fdt_header_t*)addr;
-    result->header                 = *fdtHeader;
+    struct dt_header_t* dtHeader = (struct dt_header_t*)fdt;
+    result->header                 = *dtHeader;
 
     // The values are stored as little endian so translate all of the values.
     result->header.magic             = beth(result->header.magic);
@@ -92,32 +107,34 @@ enum fdt_return_value_t fdt_parse_blob(void* addr, struct fdt_t* result) {
 
     // Ensure that the magic is valid
     if (result->header.magic != FDT_MAGIC) {
-        return FDT_NO_MAGIC;
+        return DT_NO_MAGIC;
     }
 
     // Ensure DTB version is parsable.
     if (result->header.version != FDT_VERSION) {
-        return FDT_WRONG_VERSION;
+        return DT_WRONG_VERSION;
     }
 
     // The reserved memory section is located after the header block.
     result->reserved_mem =
-        (struct fdt_reserve_entry_t*)((u8_t*)addr + result->header.off_mem_rsvmap);
+        (struct dt_reserve_entry_t*)((u8_t*)fdt + result->header.off_mem_rsvmap);
 
     // Set the device tree structure pointer.
-    result->structure_block = (void*)((u8_t*)addr + result->header.off_dt_struct);
+    result->structure_block = (void*)((u8_t*)fdt + result->header.off_dt_struct);
 
     // Set the string dictionary pointer.
-    result->strings = (const char*)addr + result->header.off_dt_strings;
+    result->strings = (const char*)fdt + result->header.off_dt_strings;
 
-    return FDT_GOOD;
+    return DT_GOOD;
 }
 
-#define print_tabs(n)\
-if (true) {\
-    unsigned int i = n;\
-    while (i-- > 0) { uart_putch('\t'); }\
-}
+#define print_tabs(n)                                                                              \
+    if (true) {                                                                                    \
+        unsigned int i = n;                                                                        \
+        while (i-- > 0) {                                                                          \
+            uart_putch(' ');                                                                      \
+        }                                                                                          \
+    }
 
 /**
  * @brief Print a node property.
@@ -125,75 +142,94 @@ if (true) {\
  * @param prop A pointer to the property data.
  * @return int Number of bytes parsed.
  */
-static int fdt_print_property(struct fdt_t* dtb, struct fdt_prop_t* prop, unsigned int level) {
+static int dt_print_property(struct dt_t* fdt, struct dt_prop_t* prop, unsigned int level) {
     print_tabs(level);
 
-    uart_puts(dtb->strings + beth(prop->nameoff));
+    uart_puts(fdt->strings + beth(prop->nameoff));
     uart_putch(':');
     u32_t ind = 0;
     while (ind < beth(prop->len)) {
-        uart_puti(beth(*(u32_t*)(prop->data + ind)));
+        uart_puth(beth(*(u32_t*)(prop->data + ind)));
         ind += 4;
     }
     uart_putch('\n');
 
-    return (sizeof(struct fdt_prop_t) + prop->len + 3) & ~0x3;
+    return (sizeof(struct dt_prop_t) + beth(prop->len) + 3) & ~0x3;
 }
 
-static int fdt_print_node(struct fdt_t* dtb, const u32_t* nodePtr, int level) {
-    // Skip over FDT_NOP
-    const u32_t* nodeStart = nodePtr;
+#define TAB_INDENT 2
 
-    uart_puth((u32_t)nodeStart);
-    uart_puts("\n");
-    
-    while (beth(*nodePtr) == FDT_NOP) {
-        nodePtr++;
-    }
-    
-    // Check if valid node
-    if (beth(*nodePtr++) != FDT_BEGIN_NODE) {
-        return 0;
-    }
-    
-    // Print the node name
-    const char* namePtr = (const char*)nodePtr;
-
-    print_tabs(level);
-    uart_puts(namePtr);
-    uart_puts("{\n");
-
-    while (*namePtr++)
-        ;
-
-    // Buffer pointer to 4 byte boundary
-    nodePtr = (u32_t*)(((ptr_t)namePtr + 3) & ~0x3);
-
+/**
+ * @brief Print a node and all of it's children nodes.
+ * 
+ * @param fdt The fdt in which this node is contained.
+ * @param nodePtr A pointer to the node.
+ * 
+ * @return The status of the print.
+ */
+static enum dt_return_value_t dt_print_node(struct dt_t* fdt, const u32_t* nodePtr) {
+    // Assumes that nodeptr is currently pointing at first FDT_BEGIN_NODE
     // Parse internal tokens
+    int level = 0;
     u32_t token;
-    while ((token = beth(*nodePtr++)) != FDT_END_NODE) {
+    while ((token = beth(*nodePtr++)) != FDT_END) {
         switch (token) {
         case FDT_NOP:
             break;
         case FDT_PROP:
-            nodePtr += fdt_print_property(dtb, (struct fdt_prop_t*)nodePtr, level + 1);
+            // Print the property
+            int len = dt_print_property(fdt, (struct dt_prop_t*)nodePtr, level);
+            nodePtr = (const u32_t*)((u8_t*)nodePtr + len);
             break;
         case FDT_BEGIN_NODE:
-            nodePtr--;
-            nodePtr += fdt_print_node(dtb, nodePtr, level + 1);
+            // Print the node name
+            const char* namePtr = (const char*)nodePtr;
+
+            print_tabs(level);
+            uart_puts(namePtr);
+            uart_puts(" {\n");
+
+            // Skip over name
+            while (*namePtr++)
+                ;
+
+            // Move ptr to 4 byte boundary
+            nodePtr = (const u32_t*)(((ptr_t)namePtr + 3) & ~0x3);
+            level += TAB_INDENT;
             break;
         case FDT_END_NODE:
+            level -= TAB_INDENT;
+            print_tabs(level);
+            uart_puts("}\n");
+            if (level == 0) {
+                return DT_GOOD;
+            }
             break;
+        default:
+            return DT_INVALID_TOKEN;
         }
     }
-
-    print_tabs(level);
-    uart_puts("}\n");
-
-    return nodePtr - nodeStart;
 }
 
-void fdt_print(struct fdt_t* dtb) {
-    const u32_t* structurePtrStart = (const u32_t*)dtb->structure_block;
-    fdt_print_node(dtb, structurePtrStart, 0);
+/**
+ * @brief Print a simplified representation of a flattened device tree.
+ * 
+ * @param fdt The flattened device tree.
+ * @return enum dt_return_value_t Return status.
+ */
+enum dt_return_value_t dt_print(struct dt_t* dt) {
+    const u32_t* structurePtrStart = (const u32_t*)dt->structure_block;
+    const u32_t* nodePtr = structurePtrStart;
+
+    // Skip over FDT_NOP
+    while (beth(*nodePtr) == FDT_NOP) {
+        nodePtr++;
+    }
+
+    // Check if valid node
+    if (beth(*nodePtr) != FDT_BEGIN_NODE) {
+        return DT_INVALID_TOKEN;
+    }
+
+    return dt_print_node(dt, nodePtr);
 }

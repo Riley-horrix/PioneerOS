@@ -38,6 +38,8 @@ KERNEL_DEBUG	= $(BUILD_DIR)/kerneld.elf
 KERNEL_IMG 		= $(BUILD_DIR)/kernel.img
 KERNEL_ASM		= $(BUILD_DIR)/kernel.asm
 
+KERNEL_BASE_ADDR = 0x10000
+
 export
 
 all: $(BUILD_DIR) kernel
@@ -61,13 +63,13 @@ kernel-debug: $(BUILD_DIR)
 	$(MAKE) -C ./src $(KERNEL_DEBUG)
 
 qemu: kernel
-	qemu-system-arm -nographic $(QEMU_OPT) -kernel $(KERNEL_IMG)
+	qemu-system-arm -nographic $(QEMU_OPT) -device loader,file=$(KERNEL_IMG),addr=$(KERNEL_BASE_ADDR),cpu-num=0
 
 qemu-console: kernel
-	qemu-system-arm $(QEMU_OPT) -kernel $(KERNEL_IMG)
+	qemu-system-arm $(QEMU_OPT) -device loader,file=$(KERNEL_IMG),addr=$(KERNEL_BASE_ADDR),cpu-num=0
 
-qemu-debug: kernel-debug
-	qemu-system-arm -nographic $(QEMU_OPT) -S -s -kernel $(KERNEL_IMG)
+qemu-debug: kernel-debug kernel
+	qemu-system-arm -nographic $(QEMU_OPT) -S -s -device loader,file=$(KERNEL_DEBUG),addr=$(KERNEL_BASE_ADDR),cpu-num=0
 
 lldb:
 	lldb --arch armv6m --one-line "gdb-remote 1234" $(KERNEL_DEBUG)

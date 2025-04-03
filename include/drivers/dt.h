@@ -22,10 +22,11 @@
 #define FDT_MAGIC   0xd00dfeed
 #define FDT_VERSION 17
 
-enum fdt_return_value_t {
-    FDT_GOOD          = 0,
-    FDT_NO_MAGIC      = -1,
-    FDT_WRONG_VERSION = -2,
+enum dt_return_value_t {
+    DT_GOOD          = 0,
+    DT_NO_MAGIC      = -1,
+    DT_WRONG_VERSION = -2,
+    DT_INVALID_TOKEN = -3,
 };
 
 /**
@@ -78,7 +79,7 @@ enum fdt_return_value_t {
  * This field shall contain the length in bytes of the structure block section of the devicetree
  * blob.
  */
-struct fdt_header_t {
+struct dt_header_t {
     u32_t magic;             // Should be 0xd00dfeed
     u32_t totalsize;         // Total size of all blocks
     u32_t off_dt_struct;     // Offset of the structure block
@@ -97,7 +98,7 @@ struct fdt_header_t {
  * These structures are 8 byte aligned with the start of the dtb.
  *
  */
-struct fdt_reserve_entry_t {
+struct dt_reserve_entry_t {
     uint64_t address;
     uint64_t size;
 } MEMORY_STRUCT;
@@ -106,7 +107,7 @@ struct fdt_reserve_entry_t {
  * @brief A structure for storing information about a property within the structure block.
  *
  */
-struct fdt_prop_t {
+struct dt_prop_t {
     u32_t len;     // Length of the data block (a 0 value represents an empty property).
     u32_t nameoff; // Offset into the strings block.
     u8_t data[];   // Property data.
@@ -116,14 +117,18 @@ struct fdt_prop_t {
  * @brief Structure representing the entire flattened device tree.
  *
  */
-struct fdt_t {
-    struct fdt_header_t header;               // Info containing header.
-    struct fdt_reserve_entry_t* reserved_mem; // A list of reserved memory entries.
-    void* structure_block;                    // Device tree structure.
-    const char* strings;                      // The strings block.
+struct dt_t {
+    struct dt_header_t header;               // Info containing header.
+    struct dt_reserve_entry_t* reserved_mem; // A list of reserved memory entries.
+    void* structure_block;                   // Device tree structure.
+    const char* strings;                     // The strings block.
 };
 
-enum fdt_return_value_t fdt_parse_blob(void* addr, struct fdt_t* result);
-void fdt_print(struct fdt_t* dtb);
+enum dt_return_value_t dt_init(void* fdt);
+
+
+
+enum dt_return_value_t dt_parse_blob(void* fdt, struct dt_t* result);
+enum dt_return_value_t dt_print(struct dt_t* dt);
 
 #endif
