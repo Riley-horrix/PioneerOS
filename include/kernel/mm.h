@@ -15,6 +15,6 @@ enum MemoryMapReturn {
     MM_BAD_DEVICE_TREE = -1,
 };
 
-enum MemoryMapReturn mm_init(void* dtb);
+enum MemoryMapReturn mm_init();
 
 #endif

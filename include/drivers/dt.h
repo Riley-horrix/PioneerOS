@@ -23,112 +23,29 @@
 #define FDT_VERSION 17
 
 enum dt_return_value_t {
-    DT_GOOD          = 0,
-    DT_NO_MAGIC      = -1,
-    DT_WRONG_VERSION = -2,
-    DT_INVALID_TOKEN = -3,
+    DT_GOOD             = 0,
+    DT_NO_MAGIC         = -1,
+    DT_WRONG_VERSION    = -2,
+    DT_INVALID_TOKEN    = -3,
+    DT_INVALID_PATH     = -4,
+    DT_NO_MORE_SIBLINGS = -5,
+    DT_NO_MORE_PROPS    = -6,
+    DT_NO_CHILDREN      = -7,
+    DT_INVALID_ITER     = -8,
 };
 
-/**
- * @brief The header structure for a flattened device tree.
- *
- * - `u32_t magic`
- * This field shall contain the value 0xd00dfeed (big-endian).
- *
- * - `u32_t totalsize`
- * This field shall contain the total size in bytes of the devicetree data structure. This size
- * shall encompass all sections of the structure: the header, the memory reservation block,
- * structure block and strings block, as well as any free space gaps between the blocks or after
- * the final block.
- *
- * - `u32_t off_dt_struct`
- * This field shall contain the offset in bytes of the structure block (see section 5.4) from
- * the beginning of the header.
- *
- * - `u32_t off_dt_strings`
- * This field shall contain the offset in bytes of the strings block (see section 5.5) from the
- * beginning of the header.
- *
- * - `u32_t off_mem_rsvmap`
- * This field shall contain the offset in bytes of the memory reservation block (see
- * section 5.3) from the beginning of the header.
- *
- * - `u32_t version`
- * This field shall contain the version of the devicetree data structure. The version is 17 if
- * using the structure as defined in this document. An DTSpec boot program may provide the
- * devicetree of a later version, in which case this field shall contain the version number
- * defined in whichever later document gives the details of that version.
- *
- * - `u32_t last_comp_version`
- * This field shall contain the lowest version of the devicetree data structure with which the
- * version used is backwards compatible. So, for the structure as defined in this document
- * (version 17), this field shall contain 16 because version 17 is backwards compatible with
- * version 16, but not earlier versions. As per section 5.1, a DTSpec boot program should
- * provide a devicetree in a format which is backwards compatible with version 16, and thus this
- * field shall always contain 16.
- *
- * - `u32_t boot_cpuid_phys`
- * This field shall contain the physical ID of the system’s boot CPU. It shall be identical to
- * the physical ID given in the reg property of that CPU node within the devicetree.
- *
- * - `u32_t size_dt_strings`
- * This field shall contain the length in bytes of the strings block section of the devicetree
- * blob.
- *
- * - `u32_t size_dt_struct`
- * This field shall contain the length in bytes of the structure block section of the devicetree
- * blob.
- */
-struct dt_header_t {
-    u32_t magic;             // Should be 0xd00dfeed
-    u32_t totalsize;         // Total size of all blocks
-    u32_t off_dt_struct;     // Offset of the structure block
-    u32_t off_dt_strings;    // Offset of the strings dictionary.
-    u32_t off_mem_rsvmap;    // Offset of the reserved memory map.
-    u32_t version;           // Dtb version
-    u32_t last_comp_version; // Last compatible version
-    u32_t boot_cpuid_phys;   // Physical cpu id
-    u32_t size_dt_strings;   // Size of the strings dictionary
-    u32_t size_dt_struct;    // Size of the structure block
-};
+// Forward decls
 
-/**
- * @brief A single reserved memory entry.
- *
- * These structures are 8 byte aligned with the start of the dtb.
- *
- */
-struct dt_reserve_entry_t {
-    uint64_t address;
-    uint64_t size;
-} MEMORY_STRUCT;
+struct dt_node_iter_t;
 
-/**
- * @brief A structure for storing information about a property within the structure block.
- *
- */
-struct dt_prop_t {
-    u32_t len;     // Length of the data block (a 0 value represents an empty property).
-    u32_t nameoff; // Offset into the strings block.
-    u8_t data[];   // Property data.
-} MEMORY_STRUCT;
+// General
 
-/**
- * @brief Structure representing the entire flattened device tree.
- *
- */
-struct dt_t {
-    struct dt_header_t header;               // Info containing header.
-    struct dt_reserve_entry_t* reserved_mem; // A list of reserved memory entries.
-    void* structure_block;                   // Device tree structure.
-    const char* strings;                     // The strings block.
-};
+extern enum dt_return_value_t dt_init(void* fdt);
 
-enum dt_return_value_t dt_init(void* fdt);
+// Iterators
 
-
-
-enum dt_return_value_t dt_parse_blob(void* fdt, struct dt_t* result);
-enum dt_return_value_t dt_print(struct dt_t* dt);
-
+extern enum dt_return_value_t dt_iter_init_node(struct dt_node_iter_t* iter);
+extern enum dt_return_value_t dt_iter_next_sibling(struct dt_node_iter_t* iter);
+extern enum dt_return_value_t dt_iter_first_child(struct dt_node_iter_t* iter);
+extern enum dt_return_value_t dt_iter_namen(struct dt_node_iter_t* iter, char* out, size_t n);
 #endif

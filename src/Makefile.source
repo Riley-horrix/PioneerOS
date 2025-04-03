@@ -5,12 +5,13 @@ BOOT_SRC += boot/start.S
 # ./common Source Files
 COMMON_SRC  = common/common.c
 COMMON_SRC += common/mmio.c
+COMMON_SRC += common/string.c
 
 # ./driver Source Files
 DRIVER_SRC  = drivers/uart.c
 DRIVER_SRC += drivers/gpio.c
 DRIVER_SRC += drivers/mbox.c
-DRIVER_SRC += drivers/dtb.c
+DRIVER_SRC += drivers/dt.c
 DRIVER_SRC += drivers/clock.c
 
 # ./kernel Source Files

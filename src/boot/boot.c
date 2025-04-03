@@ -45,13 +45,10 @@ void boot_main(u32_t r0, u32_t r1, ptr_t dtb) {
     uart_init();
     boot_info_uart("Initialising PioneerOS.");
 
-    if (beTest) {
-        boot_info_uart("Running on a big endian cpu.");
-    } else {
-        boot_info_uart("Running on a little endian cpu.");
+    if (dt_init((void*)dtb) != DT_GOOD) {
+        boot_info_uart("Failed to initialise the device tree.");
+        panic();
     }
-
-    if (dt_init((void*)dtb) != DT_GOOD);
 
     boot_info_uart("Initialisation complete.");
 

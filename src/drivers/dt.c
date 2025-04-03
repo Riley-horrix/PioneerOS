@@ -10,6 +10,8 @@
 
 #include "drivers/dt.h"
 #include "common/common.h"
+#include "common/defines.h"
+#include "common/string.h"
 #include "common/types.h"
 #include "drivers/uart.h"
 
@@ -68,30 +70,278 @@
  */
 #define FDT_END 0x00000009
 
+/**
+ * @brief The header structure for a flattened device tree.
+ *
+ * - `u32_t magic`
+ * This field shall contain the value 0xd00dfeed (big-endian).
+ *
+ * - `u32_t totalsize`
+ * This field shall contain the total size in bytes of the devicetree data structure. This size
+ * shall encompass all sections of the structure: the header, the memory reservation block,
+ * structure block and strings block, as well as any free space gaps between the blocks or after
+ * the final block.
+ *
+ * - `u32_t off_dt_struct`
+ * This field shall contain the offset in bytes of the structure block (see section 5.4) from
+ * the beginning of the header.
+ *
+ * - `u32_t off_dt_strings`
+ * This field shall contain the offset in bytes of the strings block (see section 5.5) from the
+ * beginning of the header.
+ *
+ * - `u32_t off_mem_rsvmap`
+ * This field shall contain the offset in bytes of the memory reservation block (see
+ * section 5.3) from the beginning of the header.
+ *
+ * - `u32_t version`
+ * This field shall contain the version of the devicetree data structure. The version is 17 if
+ * using the structure as defined in this document. An DTSpec boot program may provide the
+ * devicetree of a later version, in which case this field shall contain the version number
+ * defined in whichever later document gives the details of that version.
+ *
+ * - `u32_t last_comp_version`
+ * This field shall contain the lowest version of the devicetree data structure with which the
+ * version used is backwards compatible. So, for the structure as defined in this document
+ * (version 17), this field shall contain 16 because version 17 is backwards compatible with
+ * version 16, but not earlier versions. As per section 5.1, a DTSpec boot program should
+ * provide a devicetree in a format which is backwards compatible with version 16, and thus this
+ * field shall always contain 16.
+ *
+ * - `u32_t boot_cpuid_phys`
+ * This field shall contain the physical ID of the system’s boot CPU. It shall be identical to
+ * the physical ID given in the reg property of that CPU node within the devicetree.
+ *
+ * - `u32_t size_dt_strings`
+ * This field shall contain the length in bytes of the strings block section of the devicetree
+ * blob.
+ *
+ * - `u32_t size_dt_struct`
+ * This field shall contain the length in bytes of the structure block section of the devicetree
+ * blob.
+ */
+struct dt_header_t {
+    u32_t magic;             // Should be 0xd00dfeed
+    u32_t totalsize;         // Total size of all blocks
+    u32_t off_dt_struct;     // Offset of the structure block
+    u32_t off_dt_strings;    // Offset of the strings dictionary.
+    u32_t off_mem_rsvmap;    // Offset of the reserved memory map.
+    u32_t version;           // Dtb version
+    u32_t last_comp_version; // Last compatible version
+    u32_t boot_cpuid_phys;   // Physical cpu id
+    u32_t size_dt_strings;   // Size of the strings dictionary
+    u32_t size_dt_struct;    // Size of the structure block
+};
+
+/**
+ * @brief A single reserved memory entry.
+ *
+ * These structures are 8 byte aligned with the start of the dtb.
+ *
+ */
+struct dt_reserve_entry_t {
+    uint64_t address;
+    uint64_t size;
+} MEMORY_STRUCT;
+
+/**
+ * @brief A structure for storing information about a property within the structure block.
+ *
+ */
+struct dt_prop_t {
+    u32_t len;     // Length of the data block (a 0 value represents an empty property).
+    u32_t nameoff; // Offset into the strings block.
+    u8_t data[];   // Property data.
+} MEMORY_STRUCT;
+
+/**
+ * @brief Structure representing the entire flattened device tree.
+ *
+ */
+struct dt_t {
+    struct dt_header_t header;               // Info containing header.
+    struct dt_reserve_entry_t* reserved_mem; // A list of reserved memory entries.
+    void* structure_block;                   // Device tree structure.
+    const char* strings;                     // The strings block.
+};
+
+/**
+ * @brief Structure to store information about a node iterator.
+ *
+ */
+struct dt_node_iter_t {
+    const struct dt_t* device_tree; // Device tree of the node.
+    const u32_t* node_ptr;          // Pointer to the FDT_BEGIN_NODE tag of this node.
+};
+
+// Forward decls
+
+static enum dt_return_value_t dt_parse_blob(void* fdt, struct dt_t* result);
+
 /// @brief Global instance of the system fdt.
-struct dt_t system_fdt;
+struct dt_t system_dt;
 
 /**
  * @brief Initialise the global `dt_t` instance with a given fdt.
- * 
- * @param fdt The flattened device tree blob.
+ *
+ * @param fdt Pointer to the flattened device tree blob.
  * @return enum dt_return_value_t The return value
  */
-enum dt_return_value_t dt_init(void* fdt) {
-    return dt_parse_blob(fdt, &system_fdt);
+enum dt_return_value_t dt_init(void* fdt) { return dt_parse_blob(fdt, &system_dt); }
+
+const char* rootName = "/";
+
+static bool verify_node_iter(struct dt_node_iter_t* iter) {
+    return beth(*iter->node_ptr) == FDT_BEGIN_NODE;
+}
+
+/**
+ * @brief Initialise given node iterator to point at the root node, '/'.
+ *
+ * @param iter The node iterator.
+ * @return enum dt_return_value_t Return value.
+ */
+enum dt_return_value_t dt_iter_init_node(struct dt_node_iter_t* iter) {
+    iter->device_tree           = &system_dt;
+    const u32_t* structureStart = (const u32_t*)system_dt.structure_block;
+
+    // Skip possible NOPS
+    while (beth(*structureStart) == FDT_NOP) {
+        structureStart++;
+    }
+
+    if (beth(*structureStart) != FDT_BEGIN_NODE) {
+        return DT_INVALID_TOKEN;
+    }
+
+    iter->node_ptr = structureStart;
+    return DT_GOOD;
+}
+
+/**
+ * @brief Advance the iterator to the next sibling of the node pointed to by the current iterator.
+ *
+ * @param iter The iterator to move.
+ * @return enum dt_return_value_t Return value.
+ */
+enum dt_return_value_t dt_iter_next_sibling(struct dt_node_iter_t* iter) {
+    const u32_t* nodePtr = iter->node_ptr;
+
+    if (!verify_node_iter(iter)) {
+        return DT_INVALID_ITER;
+    }
+
+    u32_t token;
+    int level = 0;
+
+    while ((token = *nodePtr++) != FDT_END) {
+        if (token == FDT_BEGIN_NODE) {
+            level++;
+        }
+        if (token == FDT_END_NODE) {
+            level--;
+            if (level == 0) {
+                break;
+            }
+        }
+        if (token == FDT_PROP) {
+            // Skip over the property
+            struct dt_prop_t* prop = (struct dt_prop_t*)nodePtr;
+            int bytesToSkip        = (sizeof(struct dt_prop_t) + beth(prop->len) + 3) & ~0x3;
+            nodePtr                = (const u32_t*)((u8_t*)nodePtr + bytesToSkip);
+        }
+    }
+
+    if (token == FDT_END) {
+        return DT_NO_MORE_SIBLINGS;
+    }
+
+    // Skip over nop
+    while (beth(*nodePtr) == FDT_NOP) {
+        nodePtr++;
+    }
+
+    if (beth(*nodePtr) != FDT_BEGIN_NODE) {
+        return DT_INVALID_TOKEN;
+    }
+
+    iter->node_ptr = nodePtr;
+    return DT_GOOD;
+}
+
+/**
+ * @brief Advance the iterator into the node, and onto the first child of the node.
+ *
+ * @param iter The iterator to move.
+ * @return enum dt_return_value_t Return value. TODO (whole file)
+ */
+enum dt_return_value_t dt_iter_first_child(struct dt_node_iter_t* iter) {
+    const u32_t* nodePtr = iter->node_ptr;
+
+    if (!verify_node_iter(iter)) {
+        return DT_INVALID_ITER;
+    }
+
+    u32_t token;
+
+    // Skip over possible properties
+    while ((token = *nodePtr++) != FDT_END) {
+        if (token == FDT_END_NODE) {
+            return DT_NO_CHILDREN;
+        }
+
+        if (token == FDT_PROP) {
+            // Skip over the property
+            struct dt_prop_t* prop = (struct dt_prop_t*)nodePtr;
+            int bytesToSkip        = (sizeof(struct dt_prop_t) + beth(prop->len) + 3) & ~0x3;
+            nodePtr                = (const u32_t*)((u8_t*)nodePtr + bytesToSkip);
+        }
+
+        if (token == FDT_BEGIN_NODE) {
+            nodePtr--; // Move nodePtr back onto tag
+            break;
+        }
+    }
+
+    if (token == FDT_END) {
+        return DT_NO_CHILDREN;
+    }
+
+    iter->node_ptr = nodePtr;
+
+    return DT_GOOD;
+}
+
+/**
+ * @brief Read the value of the name of the current node that `iter` is pointing to, and writes `n`
+ * bytes of it into `out`.
+ *
+ * @param iter The node iterator.
+ * @param out Where to write the name to.
+ * @param n Maximal number of characters to write.
+ * @return enum dt_return_value_t Return value;
+ */
+enum dt_return_value_t dt_iter_namen(struct dt_node_iter_t* iter, char* out, size_t n) {
+    if (!verify_node_iter(iter)) {
+        return DT_INVALID_ITER;
+    }
+
+    strncpy(out, (const char*)(++iter->node_ptr), n);
+
+    return DT_GOOD;
 }
 
 /**
  * @brief Parse a device tree located at `fdt`, and write the results into `result`.
- * 
+ *
  * This function only parsed the header of the fdt and does not validate any properties or nodes.
  *
  * Returns an enum dt_return_value_t.
  */
-enum dt_return_value_t fdt_parse_blob(void* fdt, struct dt_t* result) {
+static enum dt_return_value_t dt_parse_blob(void* fdt, struct dt_t* result) {
     // The header structure should be located at the start of the blob.
     struct dt_header_t* dtHeader = (struct dt_header_t*)fdt;
-    result->header                 = *dtHeader;
+    result->header               = *dtHeader;
 
     // The values are stored as little endian so translate all of the values.
     result->header.magic             = beth(result->header.magic);
@@ -116,8 +366,7 @@ enum dt_return_value_t fdt_parse_blob(void* fdt, struct dt_t* result) {
     }
 
     // The reserved memory section is located after the header block.
-    result->reserved_mem =
-        (struct dt_reserve_entry_t*)((u8_t*)fdt + result->header.off_mem_rsvmap);
+    result->reserved_mem = (struct dt_reserve_entry_t*)((u8_t*)fdt + result->header.off_mem_rsvmap);
 
     // Set the device tree structure pointer.
     result->structure_block = (void*)((u8_t*)fdt + result->header.off_dt_struct);
@@ -132,7 +381,7 @@ enum dt_return_value_t fdt_parse_blob(void* fdt, struct dt_t* result) {
     if (true) {                                                                                    \
         unsigned int i = n;                                                                        \
         while (i-- > 0) {                                                                          \
-            uart_putch(' ');                                                                      \
+            uart_putch(' ');                                                                       \
         }                                                                                          \
     }
 
@@ -161,10 +410,10 @@ static int dt_print_property(struct dt_t* fdt, struct dt_prop_t* prop, unsigned 
 
 /**
  * @brief Print a node and all of it's children nodes.
- * 
+ *
  * @param fdt The fdt in which this node is contained.
  * @param nodePtr A pointer to the node.
- * 
+ *
  * @return The status of the print.
  */
 static enum dt_return_value_t dt_print_node(struct dt_t* fdt, const u32_t* nodePtr) {
@@ -213,13 +462,13 @@ static enum dt_return_value_t dt_print_node(struct dt_t* fdt, const u32_t* nodeP
 
 /**
  * @brief Print a simplified representation of a flattened device tree.
- * 
+ *
  * @param fdt The flattened device tree.
  * @return enum dt_return_value_t Return status.
  */
-enum dt_return_value_t dt_print(struct dt_t* dt) {
+UNUSED static enum dt_return_value_t dt_print(struct dt_t* dt) {
     const u32_t* structurePtrStart = (const u32_t*)dt->structure_block;
-    const u32_t* nodePtr = structurePtrStart;
+    const u32_t* nodePtr           = structurePtrStart;
 
     // Skip over FDT_NOP
     while (beth(*nodePtr) == FDT_NOP) {

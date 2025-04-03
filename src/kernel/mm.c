@@ -1,5 +1,5 @@
 #include "kernel/mm.h"
-#include "drivers/dtb.h"
+#include "drivers/dt.h"
 
 /**
  * @brief Initialise the kernel memory map.
@@ -9,15 +9,4 @@
  * @param dtb Pointer to the flattened device tree.
  * @return int Memory Map return
  */
-enum MemoryMapReturn mm_init(void* dtb) {
-    struct fdt_t deviceTree;
-    int res = fdt_parse_blob((void*)dtb, &deviceTree);
-
-    if (res != FDT_GOOD) {
-        return MM_BAD_DEVICE_TREE;
-    }
-
-    fdt_print(&deviceTree);
-
-    return MM_GOOD;
-}
+enum MemoryMapReturn mm_init() { return MM_GOOD; }
