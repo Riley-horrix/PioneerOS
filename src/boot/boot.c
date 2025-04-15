@@ -11,24 +11,28 @@
 #include "common/types.h"
 #include "drivers/clock.h"
 #include "drivers/dt.h"
-#include "drivers/mbox.h"
 #include "drivers/uart.h"
+#include "kernel/mm.h"
 
-#define boot_info_uart(msg)                                                                        \
-    if (true) {                                                                                    \
-        u64_t time = clock_micros();                                                               \
-        uart_puts("[");                                                                            \
-        uart_putu((u32_t)time);                                                                    \
-        uart_puts("]:\t");                                                                         \
-        uart_puts(msg);                                                                            \
-        uart_putch('\n');                                                                          \
-    }
-// #define boot_info(msg) printf(msg);
-
-void panic() {
-    while (true)
-        ;
+void boot_info_uart(const char* msg) {
+    u64_t time = clock_micros();
+    uart_putch('[');
+    uart_putu((u32_t)time);
+    uart_puts("]:\t");
+    uart_puts(msg);
+    uart_putch('\n');
 }
+
+void boot_panic() {
+    while (true)
+    ;
+}
+
+#define verify_valid_boot(func, exp, msg) \
+    if ((func) != (exp)) { \
+        boot_info_uart(msg); \
+        boot_panic(); \
+    }
 
 /**
  * @brief Do all of the low level driver initialisation and setup.
@@ -43,12 +47,11 @@ void boot_main(u32_t r0, u32_t r1, ptr_t dtb) {
 
     common_init();
     uart_init();
+    
     boot_info_uart("Initialising PioneerOS.");
-
-    if (dt_init((void*)dtb) != DT_GOOD) {
-        boot_info_uart("Failed to initialise the device tree.");
-        panic();
-    }
+    
+    verify_valid_boot(dt_init((void*)dtb), DT_GOOD, "Failed to initialise the device tree.");
+    verify_valid_boot(mm_init(), MM_GOOD, "Failed to initialise the memory map.");
 
     boot_info_uart("Initialisation complete.");
 

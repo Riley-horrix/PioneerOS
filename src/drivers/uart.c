@@ -276,23 +276,23 @@ void uart_puth(u32_t number) {
     uart_puts(head);
 }
 
-// void uart_puthl(u64_t number) {
-//     if (!number) {
-//         uart_puts("0x0");
-//         return;
-//     }
+void uart_puthl(u64_t number) {
+    if (!number) {
+        uart_puts("0x0");
+        return;
+    }
 
-//     char buffer[19]; // 1 '0', 1 'x', 16 hex digits and a null terminator.
-//     char* head = buffer + 18;
+    char buffer[19]; // 1 '0', 1 'x', 16 hex digits and a null terminator.
+    char* head = buffer + 18;
 
-//     *head-- = '\0';
-//     while (number != 0) {
-//         *head-- = format_hex((number % 16));
-//         number >>= 4;
-//     }
+    *head-- = '\0';
+    while (number != 0) {
+        *head-- = format_hex((number & 0xf));
+        number >>= 4;
+    }
 
-//     *head-- = 'x';
-//     *head   = '0';
+    *head-- = 'x';
+    *head   = '0';
 
-//     uart_puts(head);
-// }
+    uart_puts(head);
+}

@@ -38,9 +38,11 @@ enum MailboxRequestCodes {
  *
  */
 enum MailboxReturnStatus {
-    MBOX_RETURN_OK             = 0,
+    MBOX_GOOD                  = 0,
     MBOX_ERROR_PARSING_REQUEST = -1,
-    MBOX_ERROR_NO_RESPONSE     = -2
+    MBOX_ERROR_NO_RESPONSE     = -2,
+    MBOX_ITER_NO_MORE_SEGMENTS = -3,
+    MM_FAILED_INIT             = -4,
 };
 
 /**
@@ -74,8 +76,29 @@ struct MailboxBoardRevision {
     u32_t overVoltage : 1;
 } __attribute__((packed));
 
+/**
+ * @brief Represents the memory information returned by the mailbox.
+ *
+ * This struct can be passed into `mailbox_request_property` as the buffer if the code is
+ * MBOX_GET_ARM_MEMORY or MBOX_GET_VC_MEMORY.
+ */
+struct MailboxMemoryIterator {
+    u32_t base;
+    u32_t size;
+    int index;      // Used by mbox.c, do not modify.
+    bool is_arm;
+};
+
+int mailbox_request_buffer_size(enum MailboxRequestCodes code);
+
 enum MailboxReturnStatus mailbox_request_property(enum MailboxRequestCodes code, u8_t* buffer);
 
-int mailbox_resolve_request_buffer_size(enum MailboxRequestCodes code);
+inline enum MailboxReturnStatus mailbox_request_brev(struct MailboxBoardRevision* buffer) {
+    return mailbox_request_property(MBOX_GET_BOARD_REVISION, (u8_t*)buffer);
+}
+
+enum MailboxReturnStatus mailbox_mem_iter_init(struct MailboxMemoryIterator* iter, bool is_arm);
+enum MailboxReturnStatus mailbox_mem_iter_next(struct MailboxMemoryIterator* iter);
+
 
 #endif

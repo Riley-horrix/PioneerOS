@@ -1,0 +1,2 @@
+# ./common Test Files
+COMMON_TEST_SRC  = common/string_test.c 

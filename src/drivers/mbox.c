@@ -95,49 +95,6 @@ static void mailbox_call(u32_t* buffer, enum MailboxChannels channel) {
 }
 
 /**
- * @brief Find out how large of a buffer must be allocated to store a request to the mailbox with
- * this code.
- *
- * Note that `MBOX_GET_CLOCKS` can return a multiple of the returned required buffer size. The
- * multiple
- *
- * @param code The request code.
- * @return int The required size of the buffer in bytes. 0 returned if `code` is not valid.
- */
-int mailbox_resolve_request_buffer_size(enum MailboxRequestCodes code) {
-    switch (code) {
-    case MBOX_GET_FIRMWARE_MODEL:
-        return 0x4;
-        break;
-    case MBOX_GET_BOARD_MODEL:
-        return 0x4;
-        break;
-    case MBOX_GET_BOARD_REVISION:
-        return 0x4;
-        break;
-    case MBOX_GET_BOARD_MAC_ADDR:
-        return 0x6;
-        break;
-    case MBOX_GET_BOARD_SERIAL:
-        return 0x8;
-        break;
-    case MBOX_GET_ARM_MEMORY:
-        return 0x8;
-        break;
-    case MBOX_GET_VC_MEMORY:
-        return 0x8;
-        break;
-    case MBOX_GET_CLOCKS:
-        return 0x8;
-        break;
-
-    default:
-        return 0;
-        break;
-    }
-}
-
-/**
  * @brief Request a property through the mailbox interface. Returns an integer status code,
  * MailboxReturnStatus.
  *
@@ -193,5 +150,104 @@ enum MailboxReturnStatus mailbox_request_property(enum MailboxRequestCodes code,
         buffer[i] = vbuf_8[i];
     }
 
-    return MBOX_RETURN_OK;
+    return MBOX_GOOD;
+}
+
+/**
+ * @brief Find out how large of a buffer must be allocated to store a request to the mailbox with
+ * this code.
+ *
+ * Note that `MBOX_GET_CLOCKS` can return a multiple of the returned required buffer size. The
+ * multiple
+ *
+ * @param code The request code.
+ * @return int The required size of the buffer in bytes. 0 returned if `code` is not valid.
+ */
+int mailbox_resolve_request_buffer_size(enum MailboxRequestCodes code) {
+    switch (code) {
+    case MBOX_GET_FIRMWARE_MODEL:
+        return 0x4;
+        break;
+    case MBOX_GET_BOARD_MODEL:
+        return 0x4;
+        break;
+    case MBOX_GET_BOARD_REVISION:
+        return 0x4;
+        break;
+    case MBOX_GET_BOARD_MAC_ADDR:
+        return 0x6;
+        break;
+    case MBOX_GET_BOARD_SERIAL:
+        return 0x8;
+        break;
+    case MBOX_GET_ARM_MEMORY:
+        return 0x8;
+        break;
+    case MBOX_GET_VC_MEMORY:
+        return 0x8;
+        break;
+    case MBOX_GET_CLOCKS:
+        return 0x8;
+        break;
+
+    default:
+        return 0;
+        break;
+    }
+}
+
+/**
+ * @brief Initialise the mailbox memory iterator.
+ * 
+ * This function initialises the iterator to the -1st element.
+ *
+ * @param iter The iterator to be used to iterate through the memory information.
+ * @return enum MailboxReturnStatus The status of the request.
+ */
+enum MailboxReturnStatus mailbox_mem_iter_init(struct MailboxMemoryIterator* iter, bool is_arm) {
+    iter->is_arm = is_arm;
+    iter->index  = -1;
+    iter->base   = 0;
+    iter->size   = 0;
+    return MBOX_GOOD;
+}
+
+/**
+ * @brief Get the next memory segment from the mailbox.
+ *
+ * This function will return the next memory segment from the mailbox. The iterator must be
+ * initialised before this function is called.
+ *
+ * @param iter The iterator to be used to iterate through the memory information.
+ * @return enum MailboxReturnStatus The status of the request.
+ */
+enum MailboxReturnStatus mailbox_mem_iter_next(struct MailboxMemoryIterator* iter) {
+    // For now only request the first arm / vc memory segment.
+    if (iter->index == 0) {
+        return MBOX_ITER_NO_MORE_SEGMENTS;
+    }
+    if (iter->is_arm) {
+        u32_t buf[2];
+        enum MailboxReturnStatus status = mailbox_request_property(MBOX_GET_ARM_MEMORY, (u8_t*)&buf);
+        if (status != MBOX_GOOD) {
+            return status;
+        }
+
+        iter->base = *(u32_t*)&buf[0];
+        iter->size = *(u32_t*)&buf[4];
+        iter->index = 0;
+
+    } else {
+        u32_t buf[2];
+        enum MailboxReturnStatus status = mailbox_request_property(MBOX_GET_VC_MEMORY, (u8_t*)&buf);
+        if (status != MBOX_GOOD) {
+            return status;
+        }
+
+        iter->base = *(u32_t*)&buf[0];
+        iter->size = *(u32_t*)&buf[4];
+        iter->index = 0;
+    }
+
+    return MBOX_GOOD;
 }
