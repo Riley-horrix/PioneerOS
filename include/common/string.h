@@ -3,7 +3,9 @@
 
 #include "common/types.h"
 
-const char* strchr(const char* str, char c);
-int strncmp(const char* fst, const char* snd, unsigned int n);
-char* strncpy(char* destination, const char* source, size_t num);
+extern size_t strlen(const char* str);
+extern const char* strchr(const char* str, char c);
+extern int strncmp(const char* fst, const char* snd, unsigned int n);
+extern char* strncpy(char* destination, const char* source, size_t num);
+
 #endif

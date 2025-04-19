@@ -7,6 +7,7 @@ PIOS_VERSION := 0.0.1
 # Define absolute paths to directories
 ROOT_DIR	:= $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 BUILD_DIR 	:= $(ROOT_DIR)/build
+TEST_BUILD_DIR := $(ROOT_DIR)/build/test
 
 # Cross compiler for code
 CC_BASE ?= arm-none-eabi
@@ -38,6 +39,8 @@ KERNEL_DEBUG	= $(BUILD_DIR)/kerneld.elf
 KERNEL_IMG 		= $(BUILD_DIR)/kernel.img
 KERNEL_ASM		= $(BUILD_DIR)/kernel.asm
 
+KERNEL_TEST_LIB	= $(BUILD_DIR)/kernel_lib.a
+
 KERNEL_BASE_ADDR = 0x10000
 
 export
@@ -47,7 +50,13 @@ all: $(BUILD_DIR) kernel
 $(BUILD_DIR): $(BUILD_DIR)/boot $(BUILD_DIR)/common $(BUILD_DIR)/kernel $(BUILD_DIR)/drivers
 	mkdir -p $(BUILD_DIR)
 
+$(TEST_BUILD_DIR): $(TEST_BUILD_DIR)/src/common
+	mkdir -p $(TEST_BUILD_DIR)
+
 $(BUILD_DIR)/%:
+	mkdir -p $@
+
+$(TEST_BUILD_DIR)/%:
 	mkdir -p $@
 
 kernel: $(BUILD_DIR)
@@ -74,11 +83,27 @@ qemu-debug: kernel-debug kernel
 lldb:
 	lldb --arch armv6m --one-line "gdb-remote 1234" $(KERNEL_DEBUG)
 
+check: CC = gcc
+check: CC_ASM = gcc
+check: CC_OPT = -Wall -Wextra -Werror -std=c17
+check: CC_ASM_OPT = -Wall -Wextra -Werror
+check: $(BUILD_DIR) $(TEST_BUILD_DIR)
+	@echo
+	@echo Building PioneerOS Testing Suite
+	@echo
+	@echo PioneerOS Version : $(PIOS_VERSION)
+	@echo
+	$(MAKE) -C ./src $(KERNEL_TEST_LIB)
+	$(MAKE) -C ./src $(KERNEL_TEST)
+	./$(KERNEL_TEST)
+
 format-check:
 	$(MAKE) -C ./src format-check
+	$(MAKE) -C ./test format-check
 
 format:
 	$(MAKE) -C ./src format
+	$(MAKE) -C ./test format
 
 doc:
 	doxygen

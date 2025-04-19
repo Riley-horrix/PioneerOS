@@ -32,6 +32,7 @@ enum dt_return_value_t {
     DT_NO_MORE_PROPS    = -6,
     DT_NO_CHILDREN      = -7,
     DT_INVALID_ITER     = -8,
+    DT_PATH_NOT_FOUND   = -9,
 };
 
 // Forward decls
@@ -41,6 +42,10 @@ struct dt_node_iter_t;
 // General
 
 extern enum dt_return_value_t dt_init(void* fdt);
+
+// Searching
+
+extern enum dt_return_value_t dt_get_node_by_path(const char* path);
 
 // Iterators
 

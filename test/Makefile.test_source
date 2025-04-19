@@ -1,2 +1,4 @@
 # ./common Test Files
-COMMON_TEST_SRC  = common/string_test.c 
+COMMON_TEST_SRC  = src/common/string_test.c 
+
+TEST_SRC = $(COMMON_TEST_SRC)

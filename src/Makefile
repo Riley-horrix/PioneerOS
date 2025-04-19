@@ -26,6 +26,9 @@ $(KERNEL_DEBUG): $(BUILD_TARGETS_DEBUG)
 	$(LD) -T linker.ld -o $(KERNEL_DEBUG) $(LD_OPT) $(BUILD_TARGETS_DEBUG)
 	$(ODMP) -m arm -S -w -C -r $(KERNEL_DEBUG) > $(KERNEL_ASM)
 
+$(KERNEL_TEST_LIB): $(BUILD_TARGETS)
+	ar rcs $(KERNEL_TEST_LIB) $(BUILD_TARGETS)
+
 $(BUILD_DIR)/%.o: %.c
 	$(CC) $(CC_OPT) -MMD -MP $(RELEASE) -o $@ $<
 

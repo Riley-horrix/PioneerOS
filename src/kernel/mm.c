@@ -4,6 +4,26 @@
 #include "drivers/mbox.h"
 #include "drivers/dt.h"
 
+enum MemoryOwnership {
+    ARM      = 0,
+    VC       = 1,
+    RESERVED = 2,
+    MMIO     = 3
+};
+
+struct MemorySegment {
+    u32_t base;
+    u32_t size;
+    enum MemoryOwnership owner;
+};
+
+/**
+ * @brief Array of available memory segments.
+ * 
+ * The size of this array means that this OS only supports a maximum of 32 different memory segments.
+ */
+struct MemorySegment available_memory[32];
+
 /**
  * @brief Initialise the kernel memory map.
  *

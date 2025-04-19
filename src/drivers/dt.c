@@ -377,6 +377,55 @@ static enum dt_return_value_t dt_parse_blob(void* fdt, struct dt_t* result) {
     return DT_GOOD;
 }
 
+/**
+ * @brief Get a node by path.
+ *
+ * @param path The null terminated node name.
+ * @return enum dt_return_value_t Return value.
+ */
+enum dt_return_value_t dt_get_node_by_path(const char* path, struct dt_node_iter_t* node) {
+    struct dt_node_iter_t iter;
+    enum dt_return_value_t status = dt_iter_init_node(&iter);
+    if (status != DT_GOOD) {
+        return status;
+    }
+
+    // Node name buffer (255 chars + 1 null terminator)
+    char name[256];
+
+    int pathInd = 0;
+
+    // Write name of root node into the buffer
+    status = dt_iter_namen(&iter, name, sizeof(name));
+    if (status != DT_GOOD) {
+        return status;
+    }
+
+    while (pathInd < strlen(path)) {
+        // Compare the name to the path
+        if (strncmp(name, path, strlen(name)) == 0) {
+            // If the name and the path is the same, then either go to children, or return.
+            if (pathInd + strlen(name) == strlen(path)) {
+                // If the path is the same, then return the node.
+                *node = iter;
+                return DT_GOOD;
+            }
+            return DT_GOOD;
+        }
+
+        // Move to the next sibling
+        status = dt_iter_next_sibling(&iter);
+        if (status != DT_GOOD) {
+            return status;
+        }
+    }
+
+    return DT_PATH_NOT_FOUND;
+}
+
+
+
+
 #define print_tabs(n)                                                                              \
     if (true) {                                                                                    \
         unsigned int i = n;                                                                        \

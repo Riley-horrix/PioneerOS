@@ -2,6 +2,19 @@
 #include "common/types.h"
 
 /**
+ * @brief Get the length of a string.
+ * 
+ * @param str The string to get the length of.
+ * @return size_t The length of the string.
+ */
+size_t strlen(const char* str) {
+    const char* string = str;
+    while (*string++ != '\0');
+
+    return (size_t)(string - str - 1);
+}
+
+/**
  * @brief Find the first occurrence of the character `c` in the string, or NULL if no such character was found.
  * 
  * @param str The string to search through.
@@ -26,7 +39,6 @@ const char* strchr(const char* str, char c) {
  * @return <0 If the second string is greater than the first.
  */
 int strncmp(const char* fst, const char* snd, unsigned int n) {
-
     char c;
     while(n-- > 0 && (c = *fst++) == *snd++) {
         if (c == '\0') {
